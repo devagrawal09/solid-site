@@ -51,13 +51,13 @@ The small `packages/docs-jsx` renderer handles the automatic JSX calls published
 
 Install Chromium once with `pnpm exec playwright install chromium`, then run `pnpm test:e2e`. To use an existing Chromium installation, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable.
 
-The tests build fixtures from the installed Solid 2 development runtime and alternate renderers, and block third-party requests. They compile all 99 starter/solution/example file sets with the actual REPL worker and execute every solved lesson and example. Behavioral checks cover source changes, pending updates, retries, authoritative refresh, optimistic rollback, and todo operations in all three renderers.
+The tests build fixtures from the installed Solid 2 development runtime and alternate renderers, and block third-party requests. They compile all 99 starter/solution/example file sets with the actual REPL worker and execute every starter, solved lesson, and example. Behavioral checks cover source changes, pending updates, retries, authoritative refresh, optimistic rollback, and todo operations in all three renderers.
 
 ## Additional information
 
 #### How do the documentation files work?
 
-They're imported from the [Solid Docs](https://github.com/solidjs/solid-docs) package. There's a script there that builds the markdown files into consumable JSON files, and the package provides functions to load them.
+Tutorials are authored locally in `src/content/tutorials`: MDX explanations, JSON starter/solution files, and a canonical directory. Guide content continues to come from the [Solid Docs](https://github.com/solidjs/solid-docs) package.
 
 ## Credits
 

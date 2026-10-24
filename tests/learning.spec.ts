@@ -15,11 +15,14 @@ test('old tutorial links preserve solved state and use the redesigned directory'
   await expect(page).toHaveURL(/\/tutorial\/loading\?solved$/);
   await expect(page.locator('.prose h1')).toHaveText('Initial readiness');
   await page.getByRole('button', { name: 'Initial readiness', exact: true }).click();
-  await expect(page.getByText('Sources and derivations', { exact: true })).toBeVisible();
-  await expect(page.getByText('Async mutations', { exact: true })).toBeAttached();
+  await expect(page.getByText(/Sources and derivations$/)).toBeVisible();
+  await expect(page.getByText(/Async mutations$/)).toBeAttached();
   await page.keyboard.press('Escape');
   await page.getByRole('link', { name: 'Next step' }).click();
   await expect(page).toHaveURL(/\/tutorial\/async-errors$/);
+  await page.goto('/tutorial/bindings_spreads?solved');
+  await expect(page).toHaveURL(/\/tutorial\/forwarding-props\?solved$/);
+  await expect(page.locator('.prose h1')).toHaveText('Forwarding props');
 });
 
 test('tutorial locales use the updated English curriculum with a visible notice', async ({
@@ -105,3 +108,57 @@ for (const id of ['todos', 'simpletodos', 'simpletodoshyperscript']) {
     await expect(preview.getByRole('checkbox')).toHaveCount(0);
   });
 }
+
+test('form ref factories validate async fields and password confirmation', async ({ page }) => {
+  await page.goto('/examples/forms');
+  const preview = page.frameLocator('iframe[title="Solid REPL"]');
+  await expect(page.getByRole('tab', { name: 'main.jsx', exact: true })).toBeVisible();
+  await page.locator('[data-repl]').getByRole('tab', { name: 'Preview', exact: true }).click();
+  await preview.getByPlaceholder('Email', { exact: true }).fill('johnsmith@outlook.com');
+  await preview.getByPlaceholder('Email', { exact: true }).press('Tab');
+  await expect(preview.locator('.error-message').first()).toContainText('already being used');
+  await preview.getByPlaceholder('Email', { exact: true }).fill('new@example.com');
+  await preview.getByPlaceholder('Password', { exact: true }).fill('strong-password');
+  await preview.getByPlaceholder('Confirm Password', { exact: true }).fill('different-password');
+  await preview.getByRole('button', { name: 'Submit', exact: true }).click();
+  await expect(preview.locator('.error-message').last()).toHaveText('Passwords must match');
+  await preview.getByPlaceholder('Confirm Password', { exact: true }).fill('strong-password');
+  await preview.getByRole('button', { name: 'Submit', exact: true }).click();
+  await expect(preview.getByRole('status')).toHaveText('Form valid — ready to submit');
+});
+
+test('an async memo recovers after an invalid input and explicit retry', async ({ page }) => {
+  const preview = await lesson(page, 'async-memos');
+  await expect(preview.locator('pre')).toContainText('Explorer 1');
+  await preview.getByRole('textbox', { name: 'User ID' }).fill('404');
+  await expect(preview.getByRole('button', { name: /User not found/ })).toBeVisible();
+  await preview.getByRole('textbox', { name: 'User ID' }).fill('2');
+  await preview.getByRole('button', { name: /User not found/ }).click();
+  await expect(preview.locator('pre')).toContainText('Explorer 2');
+});
+
+for (const id of ['lists', 'positional-lists']) {
+  test(`${id} demonstrates which row retains DOM state after reordering`, async ({ page }) => {
+    const preview = await lesson(page, id);
+    await preview
+      .getByRole('textbox', { name: 'Note for Keyboard Cat', exact: true })
+      .fill('A persistent note');
+    await preview.getByRole('button', { name: 'Rotate cats', exact: true }).click();
+    const retained = id === 'lists' ? 'Keyboard Cat' : 'Maru';
+    await expect(
+      preview.getByRole('textbox', { name: `Note for ${retained}`, exact: true }),
+    ).toHaveValue('A persistent note');
+  });
+}
+
+test('a ref directive follows its conditional modal owner', async ({ page }) => {
+  const preview = await lesson(page, 'directives');
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await preview.getByRole('button', { name: 'Open Modal', exact: true }).click();
+    await expect(preview.getByText('Some Modal', { exact: true })).toBeVisible();
+    await preview.getByText('Some Modal', { exact: true }).click();
+    await expect(preview.getByText('Some Modal', { exact: true })).toBeVisible();
+    await preview.locator('body').click({ position: { x: 2, y: 2 } });
+    await expect(preview.getByText('Some Modal', { exact: true })).toHaveCount(0);
+  }
+});

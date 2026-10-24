@@ -56,14 +56,12 @@ const DirectoryMenu: Component<DirectoryMenuProps> = (props) => {
   // Close the dropdown menu every time the `current` page changes
   // and reset the querySearch
   createEffect(
-    () => props.current,
+    () => props.current?.internalName,
     () => {
-      const timer = setTimeout(() => {
-        setShowDirectory(false);
-        setSearchQuery('');
-      }, 0);
-      return () => clearTimeout(timer);
+      setShowDirectory(false);
+      setSearchQuery('');
     },
+    { defer: true },
   );
 
   createEffect(showDirectory, (visible) => {

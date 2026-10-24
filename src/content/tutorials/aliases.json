@@ -37,5 +37,6 @@
   "async_suspense_list": "reveal",
   "async_lazy": "lazy",
   "stores_nested_reactivity": "stores",
-  "flow_error_boundary": "async-errors"
+  "flow_error_boundary": "async-errors",
+  "bindings_spreads": "forwarding-props"
 }

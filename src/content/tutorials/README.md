@@ -18,7 +18,7 @@ This course teaches the Solid 2 dataflow model to newcomers. Each lesson has an 
 
 This is a redesigned sequence rather than an API rename pass. Automatic batching and writable derived state appear before effects. Shared state is introduced before context. Lifetime is taught before reusable DOM behavior. Async reads, readiness, pending updates, and mutations have separate exercises.
 
-The old nested-signals store chapter is folded into the stores lesson. The standalone render-error chapter is replaced by a complete async failure/retry exercise. New lessons cover writable derived state, ownership, actions, and optimistic rollback. Position-based lists use `For keyed={false}`. The course no longer teaches resource tuples, explicit transition starters, path setters, `produce`, `Index`, `onMount`, `on`, or `use:` directives.
+The old nested-signals store chapter is folded into the stores lesson. The spreads chapter is merged into forwarding props. The standalone render-error chapter is replaced by a complete async failure/retry exercise. New lessons cover writable derived state, ownership, actions, and optimistic rollback. Position-based lists use `For keyed={false}`. The course no longer teaches resource tuples, explicit transition starters, path setters, `produce`, `Index`, `onMount`, `on`, or `use:` directives.
 
 `directory.json` is the canonical 42-lesson order. `aliases.json` maps all 40 former lesson IDs to canonical routes, preserving query strings such as `?solved`. Old links redirect; the directory and next/previous links use the new sequence.
 

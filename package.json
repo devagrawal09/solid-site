@@ -16,10 +16,10 @@
     "build:postoptimize": "node ./postoptimize.mjs",
     "build:sitemap": "jiti scripts/generateSitemap.js",
     "type:check": "tsc --noEmit",
-    "format": "prettier -w \"src/**/*.{js,ts,json,css,tsx,jsx,md,mdx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\" \"public/examples/*.json\"",
+    "format": "prettier -w \"src/**/*.{js,ts,json,css,tsx,jsx}\" \"src/content/**/*.{md,mdx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\" \"public/examples/*.json\"",
     "deploy:dev": "wrangler publish --env development",
     "deploy:prod": "wrangler publish --env production",
-    "format:check": "prettier --check \"src/**/*.{js,ts,json,css,tsx,jsx,md,mdx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\" \"public/examples/*.json\"",
+    "format:check": "prettier --check \"src/**/*.{js,ts,json,css,tsx,jsx}\" \"src/content/**/*.{md,mdx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\" \"public/examples/*.json\"",
     "test:e2e": "playwright test"
   },
   "dependencies": {

@@ -70,7 +70,8 @@ export const TutorialData: RouteDataFactory<TutorialRouteData> = (props) => {
     get tutorialDirectoryEntry() {
       const data = directory();
       if (!data) return;
-      return data.find((el) => el.internalName === id());
+      const entry = data.find((el) => el.internalName === id());
+      return entry && { ...entry, lessonName: entry.lessonName.split('/').pop()! };
     },
     get nextUrl() {
       const data = directory();

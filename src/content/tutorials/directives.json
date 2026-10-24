@@ -3,7 +3,7 @@
     "files": [
       {
         "name": "main",
-        "content": "// @ts-nocheck\nimport { render } from '@solidjs/web';\nimport { createSignal, Show } from 'solid-js';\nimport clickOutside from './click-outside';\nimport './style.css';\n\nfunction App() {\n  const [show, setShow] = createSignal(false);\n\n  const outside = clickOutside(() => setShow(false));\n\n  return (\n    <Show\n      when={show()}\n      fallback={<button onClick={(e) => setShow(true)}>Open Modal</button>}\n    >\n      <div class=\"modal\">Some Modal</div>\n    </Show>\n  );\n}\n\nrender(() => <App />, document.getElementById('app'));\n"
+        "content": "import { render } from '@solidjs/web';\nimport { createSignal, Show } from 'solid-js';\nimport clickOutside from './click-outside';\nimport './style.css';\nfunction Modal(props) {\n  const outside = clickOutside(() => props.close());\n  return (\n    <div class=\"modal\" ref={outside}>\n      Some Modal\n    </div>\n  );\n}\nfunction App() {\n  const [show, setShow] = createSignal(false);\n  return (\n    <>\n      <button onClick={() => setShow(true)}>Open Modal</button>\n      <Show when={show()}>\n        <Modal close={() => setShow(false)} />\n      </Show>\n    </>\n  );\n}\nrender(() => <App />, document.getElementById('app'));\n"
       },
       {
         "name": "click-outside",
@@ -20,7 +20,7 @@
     "files": [
       {
         "name": "main",
-        "content": "// @ts-nocheck\nimport { render } from '@solidjs/web';\nimport { createSignal, Show } from 'solid-js';\nimport clickOutside from './click-outside';\nimport './style.css';\n\nfunction App() {\n  const [show, setShow] = createSignal(false);\n\n  const outside = clickOutside(() => setShow(false));\n\n  return (\n    <Show\n      when={show()}\n      fallback={<button onClick={(e) => setShow(true)}>Open Modal</button>}\n    >\n      <div class=\"modal\" ref={outside}>\n        Some Modal\n      </div>\n    </Show>\n  );\n}\n\nrender(() => <App />, document.getElementById('app'));\n"
+        "content": "import { render } from '@solidjs/web';\nimport { createSignal, Show } from 'solid-js';\nimport clickOutside from './click-outside';\nimport './style.css';\nfunction Modal(props) {\n  const outside = clickOutside(() => props.close());\n  return (\n    <div class=\"modal\" ref={outside}>\n      Some Modal\n    </div>\n  );\n}\nfunction App() {\n  const [show, setShow] = createSignal(false);\n  return (\n    <>\n      <button onClick={() => setShow(true)}>Open Modal</button>\n      <Show when={show()}>\n        <Modal close={() => setShow(false)} />\n      </Show>\n    </>\n  );\n}\nrender(() => <App />, document.getElementById('app'));\n"
       },
       {
         "name": "click-outside",

@@ -3,7 +3,7 @@ solid-heroicons 2.0.3 by Alexandre Mouton-Brady and Heroicons by Tailwind Labs.
 
 Tutorial starter and solution files and supporting CSS in `src/content/tutorials`
 are adapted from `@solid.js/docs` 1.0.56, by Solid Team, under the MIT license.
-Copyright (c) Solid Team and the Solid documentation contributors.
+Copyright (c) 2021 Solid
 
 MIT License
 

@@ -8,11 +8,10 @@ interface SourceFile {
 }
 interface Job {
   label: string;
-  run: boolean;
   files: SourceFile[];
 }
 
-test('every exercise compiles and every solution and example runs on Solid 2', async ({ page }) => {
+test('every starter, solution, and example compiles and runs on Solid 2', async ({ page }) => {
   test.setTimeout(180_000);
   const jobs: Job[] = [];
   for (const name of (await readdir('src/content/tutorials')).filter(
@@ -22,13 +21,12 @@ test('every exercise compiles and every solution and example runs on Solid 2', a
     for (const variant of ['lesson', 'solved'])
       jobs.push({
         label: `${name.slice(0, -5)}/${variant}`,
-        run: variant === 'solved',
         files: source[variant].files,
       });
   }
   for (const name of (await readdir('public/examples')).filter((name) => name.endsWith('.json'))) {
     const source = JSON.parse(await readFile(`public/examples/${name}`, 'utf8'));
-    jobs.push({ label: `example/${name.slice(0, -5)}`, run: true, files: source.files });
+    jobs.push({ label: `example/${name.slice(0, -5)}`, files: source.files });
   }
   expect(jobs).toHaveLength(99);
   await page.goto('/');
@@ -98,7 +96,7 @@ test('every exercise compiles and every solution and example runs on Solid 2', a
     'example/asyncresource': 'Explorer 1',
     'example/suspensetabs': 'This content is for page "Uno"',
   };
-  for (const job of jobs.filter((job) => job.run)) {
+  for (const job of jobs) {
     await test.step(job.label, async () => {
       const compiled = results.find((result) => result.label === job.label)!.compiled;
       await app.evaluate(async (app, sources) => {

@@ -8,4 +8,4 @@ Event handlers are a natural place to write sources. Use `event.currentTarget` t
 
 DOM event props use names such as `onInput`, `onChange`, and `onMouseMove`. Many common events are delegated by the renderer. State writes are batched automatically, so related setters in one event form one update.
 
-**Try it:** record the pointer's `clientX` and `clientY` in the source object and display them. Read the coordinates from the event; keep the changing position read in JSX.
+**Try it:** attach `onMouseMove={handleMouseMove}` to the container. The provided handler records the pointer's `clientX` and `clientY` in the source object. Read the coordinates from the event; keep the changing position read in JSX.

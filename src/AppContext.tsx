@@ -4,14 +4,15 @@ import { ResourceMetadata, getGuideDirectory } from '@solid.js/docs';
 import * as router from '@solidjs/router';
 import {
   ParentComponent,
-  Suspense,
+  Loading,
   createContext,
   createEffect,
-  createResource,
-  startTransition,
+  createMemo,
+  createUniqueId,
   useContext,
+  untrack,
 } from 'solid-js';
-import { createStore } from 'solid-js/store';
+import { createStore } from 'solid-js';
 import { Meta, Title } from '@solidjs/meta';
 
 // en dictionary is loaded by default
@@ -49,8 +50,7 @@ type DeepPartial<T> =
   T extends Record<string, unknown> ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
 
 const raw_dict_map: Record<Locale, () => Promise<{ dict: DeepPartial<RawDictionary> }>> = {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-  en: () => null as any, // en is loaded by default
+  en: () => Promise.resolve({ dict: en_dict }),
   az: () => import('../lang/az/az'),
   it: () => import('../lang/it/it'),
   de: () => import('../lang/de/de'),
@@ -91,12 +91,14 @@ const LANG_ALIASES: Partial<Record<string, Locale>> = {
   fil: 'tl',
 };
 
-const toLocale = (string: string): Locale | undefined =>
-  string in raw_dict_map
-    ? (string as Locale)
-    : string in LANG_ALIASES
-      ? (LANG_ALIASES[string] as Locale)
-      : undefined;
+const toLocale = (string: unknown): Locale | undefined =>
+  typeof string !== 'string'
+    ? undefined
+    : string in raw_dict_map
+      ? (string as Locale)
+      : string in LANG_ALIASES
+        ? (LANG_ALIASES[string] as Locale)
+        : undefined;
 
 interface Settings {
   locale: Locale;
@@ -126,7 +128,12 @@ function initialSettings(location: router.Location): Settings {
 }
 
 function deserializeSettings(value: string, location: router.Location): Settings {
-  const parsed = JSON.parse(value) as unknown;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    return initialSettings(location);
+  }
   if (!parsed || typeof parsed !== 'object') return initialSettings(location);
 
   return {
@@ -147,7 +154,7 @@ interface AppState {
   get guides(): ResourceMetadata[] | undefined;
 }
 
-const AppContext = createContext<AppState>({} as AppState);
+const AppContext = createContext<AppState>();
 
 export const useAppState = () => useContext(AppContext);
 
@@ -156,29 +163,40 @@ export const AppContextProvider: ParentComponent = (props) => {
 
   const now = new Date();
   const cookieOptions: storage.CookieOptions = {
+    path: '/',
     expires: new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()),
   };
 
-  const [settings, set] = storage.makePersisted(createStore(initialSettings(location)), {
-    storageOptions: cookieOptions,
-    storage: storage.cookieStorage,
-    deserialize: (value) => deserializeSettings(value, location),
-  });
+  // Restore before creating the store: initialization must not write from a component.
+  // Keep makePersisted's cookie naming so existing preferences remain readable.
+  const settingsKey = `storage-${createUniqueId()}`;
+  const [settings, set] = createStore(
+    untrack(() => {
+      const persisted = storage.cookieStorage.getItem(settingsKey, cookieOptions);
+      return persisted ? deserializeSettings(persisted, location) : initialSettings(location);
+    }),
+  );
+  createEffect(
+    () => ({ locale: settings.locale, dark: settings.dark }),
+    (value) => storage.cookieStorage.setItem(settingsKey, JSON.stringify(value), cookieOptions),
+  );
 
   const locale = () => settings.locale;
 
-  const [dict] = createResource(locale, fetchDictionary, { initialValue: en_flat_dict });
+  const dict = createMemo(() => (locale() === 'en' ? en_flat_dict : fetchDictionary(locale())));
 
-  const [guidesList] = createResource(locale, getGuideDirectory);
+  const guidesList = createMemo(() => getGuideDirectory(locale()));
 
-  createEffect(() => {
-    document.documentElement.lang = settings.locale;
+  createEffect(locale, (value) => {
+    document.documentElement.lang = value;
   });
 
-  createEffect(() => {
-    if (settings.dark) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  });
+  createEffect(
+    () => settings.dark,
+    (dark) => {
+      document.documentElement.classList.toggle('dark', dark);
+    },
+  );
 
   const t = i18n.translator(dict, i18n.resolveTemplate);
 
@@ -187,14 +205,16 @@ export const AppContextProvider: ParentComponent = (props) => {
       return settings.dark;
     },
     setDark(value) {
-      set('dark', value);
+      set((draft) => {
+        draft.dark = value;
+      });
     },
     get locale() {
       return settings.locale;
     },
     setLocale(value) {
-      void startTransition(() => {
-        set('locale', value);
+      set((draft) => {
+        draft.locale = value;
       });
     },
     t,
@@ -207,12 +227,12 @@ export const AppContextProvider: ParentComponent = (props) => {
   };
 
   return (
-    <Suspense>
-      <AppContext.Provider value={state}>
+    <Loading>
+      <AppContext value={state}>
         <Title>{t('global.title')}</Title>
         <Meta name="lang" content={locale()} />
         <div dir={state.dir}>{props.children}</div>
-      </AppContext.Provider>
-    </Suspense>
+      </AppContext>
+    </Loading>
   );
 };

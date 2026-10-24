@@ -1,39 +1,25 @@
-import { batch, Component, createSignal, ErrorBoundary } from 'solid-js';
-import { Tab } from 'solid-repl';
-import Repl from 'solid-repl/dist/repl';
-import { compiler, formatter, linter } from './setupRepl';
+import { createSignal, createUniqueId, Errored, type Component } from 'solid-js';
+import type { Tab } from 'solid-repl';
+import Repl from './Repl';
 import { useAppState } from '../AppContext';
 
-let count = 0;
-const OldRepl: Component<{ tabs: Tab[] }> = (props) => {
-  count++;
+const ReplTab: Component<{ tabs: Tab[] }> = (props) => {
+  const id = `repl-${createUniqueId()}`;
   const context = useAppState();
-  const initialTabs = props.tabs;
-  const [tabs, setTabs] = createSignal(initialTabs);
-  const [current, setCurrent] = createSignal(initialTabs[0].name);
-
+  const [tabs, setTabs] = createSignal(() => props.tabs);
   return (
-    <ErrorBoundary fallback="Repl failed to load. You may be using a browser that doesn't support Web Workers.">
+    <Errored fallback="Repl failed to load. You may be using a browser that doesn't support Web Workers.">
       <Repl
-        id={`repl-${count}`}
-        compiler={compiler}
-        formatter={formatter}
-        linter={linter}
+        id={id}
         reset={() => {
-          batch(() => {
-            setTabs(initialTabs);
-            setCurrent(initialTabs[0].name);
-          });
+          setTabs(props.tabs);
         }}
-        hideDevtools={true}
-        isHorizontal={true}
+        hideDevtools
         dark={context.isDark}
         tabs={tabs()}
         setTabs={setTabs}
-        current={current()}
-        setCurrent={setCurrent}
       />
-    </ErrorBoundary>
+    </Errored>
   );
 };
-export default OldRepl;
+export default ReplTab;

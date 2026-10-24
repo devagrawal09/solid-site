@@ -1,4 +1,3 @@
-import { createEventListener } from '@solid-primitives/event-listener';
 import { reflow } from '.';
 
 const logoWidth = '56px';
@@ -9,6 +8,7 @@ const resetTransform = (el: HTMLElement) => {
 };
 export const onEnterLogo = (logoEl: HTMLElement, isRTL: boolean) => {
   const navList = logoEl.nextElementSibling as HTMLElement;
+  if (!navList) return;
   const elements = [logoEl, navList];
 
   logoEl.style.transformOrigin = `${isRTL ? 'right' : 'left'} center`;
@@ -16,19 +16,21 @@ export const onEnterLogo = (logoEl: HTMLElement, isRTL: boolean) => {
 
   reflow();
   navList.style.transform = `translateX(0)`;
-  createEventListener(
-    logoEl,
-    'transitioned',
-    (e) => {
-      if (e.target !== e.currentTarget) return;
-      elements.forEach(resetTransform);
-    },
-    { once: true },
-  );
+  const cleanup = () => {
+    logoEl.removeEventListener('transitionend', onEnd);
+    elements.forEach(resetTransform);
+  };
+  const onEnd = (e: TransitionEvent) => {
+    if (e.target !== e.currentTarget) return;
+    cleanup();
+  };
+  logoEl.addEventListener('transitionend', onEnd);
+  return cleanup;
 };
 
 export const onExitLogo = (logoEl: HTMLElement, isRTL: boolean) => {
   const navList = logoEl.nextElementSibling as HTMLElement;
+  if (!navList) return;
   const elements = [logoEl, navList];
 
   navList.style.transform = `translateX(${isRTL ? '-' : ''}${logoWidth})`;
@@ -41,16 +43,17 @@ export const onExitLogo = (logoEl: HTMLElement, isRTL: boolean) => {
     el.style.backfaceVisibility = 'hidden';
   });
 
-  createEventListener(
-    logoEl,
-    'transitionend',
-    (e) => {
-      if (e.target !== e.currentTarget) return;
-      elements.forEach((el) => {
-        resetTransform(el);
-        el.style.backfaceVisibility = '';
-      });
-    },
-    { once: true },
-  );
+  const cleanup = () => {
+    logoEl.removeEventListener('transitionend', onEnd);
+    elements.forEach((el) => {
+      resetTransform(el);
+      el.style.backfaceVisibility = '';
+    });
+  };
+  const onEnd = (e: TransitionEvent) => {
+    if (e.target !== e.currentTarget) return;
+    cleanup();
+  };
+  logoEl.addEventListener('transitionend', onEnd);
+  return cleanup;
 };

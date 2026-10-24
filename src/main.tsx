@@ -1,4 +1,4 @@
-import { render } from 'solid-js/web';
+import { render } from '@solidjs/web';
 import './assets/main.css';
 
 // import { registerSW } from 'virtual:pwa-register';

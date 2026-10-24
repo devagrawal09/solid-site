@@ -1,17 +1,17 @@
-import Repl from 'solid-repl/dist/repl';
-import { A, useParams } from '@solidjs/router';
+import Repl from '../components/Repl';
+import { useParams } from '@solidjs/router';
 import {
   For,
   type Component,
   createSignal,
+  createMemo,
   createEffect,
-  batch,
-  ErrorBoundary,
+  onCleanup,
+  Errored,
   Show,
 } from 'solid-js';
 import type { ExamplesDataRoute } from './Examples.data';
 
-import { compiler, formatter, linter } from '../components/setupRepl';
 import { useRouteReadyState } from '../utils/routeReadyState';
 import { useAppState } from '../AppContext';
 import type { Tab } from 'solid-repl';
@@ -24,7 +24,6 @@ const Examples: Component<{ data: ExamplesDataRoute }> = (props) => {
   const { t } = context;
   const params = useParams<{ id: string }>();
   const [tabs, setTabs] = createSignal<Tab[]>([]);
-  const [current, setCurrent] = createSignal('');
 
   useRouteReadyState();
 
@@ -33,38 +32,25 @@ const Examples: Component<{ data: ExamplesDataRoute }> = (props) => {
     source: string;
   }[] = [];
 
-  createEffect(async () => {
-    const exampleData = (await fetch(`${location.origin}/examples/${params.id}.json`).then((r) =>
-      r.json(),
-    )) as {
-      files: {
-        name: string;
-        type: string;
-        content: string | string[];
-      }[];
-      version?: string;
-    };
-    batch(() => {
-      currentData = exampleData.files.map(
-        (file: { name: string; type?: string; content: string | string[] }) => {
-          return {
-            name: file.name + (file.type ? `.${file.type}` : '.jsx'),
-            source: Array.isArray(file.content) ? file.content.join('\n') : file.content,
-          };
-        },
-      );
-      setTabs([
-        ...currentData,
-        {
-          name: 'import_map.json',
-          source: `{
-  "solid-js": "https://jspm.dev/solid-js",
-  "solid-js/web": "https://jspm.dev/solid-js/web"
-}`,
-        },
-      ]);
-      setCurrent(currentData[0].name);
+  const example = createMemo(async () => {
+    const controller = new AbortController();
+    onCleanup(() => controller.abort());
+    const response = await fetch(`/examples/${encodeURIComponent(params.id)}.json`, {
+      signal: controller.signal,
     });
+    if (!response.ok) throw new Error(`Unable to load example (${response.status})`);
+    return (await response.json()) as {
+      files: { name: string; type?: string; content: string | string[] }[];
+    };
+  });
+  createEffect(example, (exampleData) => {
+    currentData = [
+      ...exampleData.files.map((file) => ({
+        name: file.name + (file.type ? `.${file.type}` : '.jsx'),
+        source: Array.isArray(file.content) ? file.content.join('\n') : file.content,
+      })),
+    ];
+    setTabs(currentData);
   });
 
   return (
@@ -81,18 +67,20 @@ const Examples: Component<{ data: ExamplesDataRoute }> = (props) => {
                 <div class="mb-10">
                   <For each={examples}>
                     {(example) => (
-                      <A
+                      <a
                         dir="ltr"
                         href={`/examples/${example.id}`}
-                        class="block my-4 space-y-2 text-sm py-3 pl-2 border-b hover:opacity-60 dark:border-solid-darkLighterBg"
-                        activeClass="text-solid-light dark:text-solid-darkdefault"
+                        class={[
+                          'block my-4 space-y-2 text-sm py-3 pl-2 border-b hover:opacity-60 dark:border-solid-darkLighterBg',
+                          'data-[active]:text-solid-light data-[active]:dark:text-solid-darkdefault',
+                        ]}
                       >
                         <span>{example.name}</span>
                         <span>{example.id === params.id}</span>
                         <span class="block text-gray-500 text-xs dark:text-white/40 text-md">
                           {example.description}
                         </span>
-                      </A>
+                      </a>
                     )}
                   </For>
                 </div>
@@ -104,34 +92,26 @@ const Examples: Component<{ data: ExamplesDataRoute }> = (props) => {
             dir="ltr"
             class="h-[82vh] rounded-lg md:col-span-8 lg:col-span-9 overflow-hidden shadow-2xl flex"
           >
-            <ErrorBoundary
+            <Errored
               fallback={
                 <>
                   Repl failed to load. You may be using a browser that doesn't support Web Workers.
                 </>
               }
             >
-              <Show when={current()}>
+              <Show when={tabs().length}>
                 <Repl
-                  compiler={compiler}
-                  formatter={formatter}
-                  linter={linter}
-                  isHorizontal={true}
+                  version="1.9.17"
                   dark={context.isDark}
                   tabs={tabs()}
                   reset={() => {
-                    batch(() => {
-                      setTabs(currentData);
-                      setCurrent(currentData[0].name);
-                    });
+                    setTabs(currentData);
                   }}
                   setTabs={setTabs}
-                  current={current()}
-                  setCurrent={setCurrent}
                   id="examples"
                 />
               </Show>
-            </ErrorBoundary>
+            </Errored>
           </div>
         </div>
       </div>

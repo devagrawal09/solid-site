@@ -1,5 +1,5 @@
-import { createResource } from 'solid-js';
-import type { RouteLoadFunc } from '@solidjs/router';
+import { createMemo, isPending } from 'solid-js';
+import type { RouteDataFactory } from '../utils/routeData';
 import { type BlogInfo, list, type MDXComponent } from './Blog.data';
 
 export interface BlogArticleData {
@@ -9,17 +9,17 @@ export interface BlogArticleData {
   article?: MDXComponent;
 }
 
-export const BlogArticleData: RouteLoadFunc<BlogArticleData> = (props) => {
-  const [article] = createResource(async () => (await list[props.params.slug].body()).default);
+export const BlogArticleData: RouteDataFactory<BlogArticleData> = (props) => {
+  const article = createMemo(async () => (await list[props.params.slug!].body()).default);
   return {
     get slug() {
-      return props.params.slug;
+      return props.params.slug!;
     },
     get loading() {
-      return article.loading;
+      return isPending(article);
     },
     get details() {
-      return list[props.params.slug];
+      return list[props.params.slug!];
     },
     get article() {
       return article();

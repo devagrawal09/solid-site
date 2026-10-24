@@ -1,4 +1,5 @@
-import { ParentComponent, onCleanup, onMount } from 'solid-js';
+import { ParentComponent, onSettled } from 'solid-js';
+import type { JSX } from '@solidjs/web';
 import { useAppState } from '../../AppContext';
 
 type TShared = {
@@ -11,7 +12,7 @@ type TShared = {
 
 const ScrollShadow: ParentComponent<
   {
-    class: string;
+    class: JSX.ClassValue;
     classList?: { [key: string]: boolean };
     locked: boolean;
   } & Omit<TShared, 'child'>
@@ -35,7 +36,7 @@ const ScrollShadow: ParentComponent<
     target.scrollLeft += e.deltaX + e.deltaY;
   };
 
-  onMount(() => {
+  onSettled(() => {
     const resetInitShadowSize = () => {
       if (!initShadowSize) return;
       if (!init && !initResetSize) {
@@ -71,10 +72,13 @@ const ScrollShadow: ParentComponent<
     observer.observe(sentinelFirstEl);
     observer.observe(sentinelLastEl);
     setInitShadowSize();
-    onCleanup(() => observer && observer.disconnect());
+    return () => {
+      observer.disconnect();
+      scrollableContainer.removeEventListener('wheel', scrollHorizontally);
+    };
   });
   return (
-    <div class={props.class} classList={props.classList}>
+    <div class={[props.class, props.classList]}>
       <Shadow
         child="first"
         direction={direction}

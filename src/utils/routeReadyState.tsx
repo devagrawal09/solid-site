@@ -1,4 +1,4 @@
-import { createComputed, createSignal } from 'solid-js';
+import { createSignal, onSettled } from 'solid-js';
 export const page = {
   scrollY: 0,
 };
@@ -30,11 +30,7 @@ export const useRouteReadyState = () => {
     restorePageHeight();
   };
 
-  try {
-    createComputed(() => {
-      return setRouteReady();
-    });
-  } catch (err) {
-    return setRouteReady();
-  }
+  onSettled(() => {
+    setRouteReady();
+  });
 };

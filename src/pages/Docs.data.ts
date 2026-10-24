@@ -1,5 +1,6 @@
-import { useLocation, type RouteLoadFunc } from '@solidjs/router';
-import { createResource } from 'solid-js';
+import { useLocation } from '@solidjs/router';
+import type { RouteDataFactory } from '../utils/routeData';
+import { createMemo, isPending } from 'solid-js';
 import { type DocFile, getApi } from '@solid.js/docs';
 import { useAppState } from '../AppContext';
 
@@ -9,13 +10,15 @@ export interface DocData {
   doc?: DocFile;
 }
 
-export const DocsData: RouteLoadFunc<DocData> = () => {
+export const DocsData: RouteDataFactory<DocData> = () => {
   const location = useLocation();
   const ctx = useAppState();
 
-  const lang = () => (location.query.locale ? location.query.locale : ctx.locale);
-  const [resource] = createResource(lang, async (lang) => {
-    const requestedLang = await getApi(lang);
+  const lang = () =>
+    typeof location.query.locale === 'string' ? location.query.locale : ctx.locale;
+  const resource = createMemo(async () => {
+    const currentLang = lang();
+    const requestedLang = await getApi(currentLang);
     if (requestedLang) return { doc: requestedLang, fallback: false };
     return { doc: await getApi('en'), fallback: true };
   });
@@ -24,7 +27,7 @@ export const DocsData: RouteLoadFunc<DocData> = () => {
       return resource()?.doc;
     },
     get loading() {
-      return resource.loading;
+      return isPending(resource);
     },
     get fallback() {
       return !!resource()?.fallback;

@@ -2,14 +2,12 @@ import {
   type Component,
   createSignal,
   lazy,
-  onMount,
+  onSettled,
   For,
-  Suspense,
+  Loading,
   Show,
   createMemo,
-  createEffect,
 } from 'solid-js';
-import { A, useIsRouting } from '@solidjs/router';
 import { createViewportObserver } from '@solid-primitives/intersection-observer';
 import iconBlocks1 from '../assets/icons/blocks1.svg';
 import iconBlocks2 from '../assets/icons/blocks2.svg';
@@ -19,8 +17,8 @@ import performant from '../assets/icons/performant.svg';
 import powerful from '../assets/icons/powerful.svg';
 import pragmatic from '../assets/icons/pragmatic.svg';
 import productive from '../assets/icons/productive.svg';
-import { shoppingCart } from 'solid-heroicons/outline';
-import { Icon } from 'solid-heroicons';
+import { shoppingCart } from '../components/icons/outline';
+import { Icon } from '../components/icons/Icon';
 import Footer from '../components/Footer';
 import Benchmarks, { type GraphData } from '../components/Benchmarks';
 import { useRouteReadyState } from '../utils/routeReadyState';
@@ -36,7 +34,6 @@ const strength_icons: { [key: string]: string } = {
 };
 
 const Home: Component<{ data: { benchmarks: GraphData[] } }> = (props) => {
-  const isRouting = useIsRouting();
   const data = props.data;
   const ctx = useAppState();
   const { t } = ctx;
@@ -44,14 +41,8 @@ const Home: Component<{ data: { benchmarks: GraphData[] } }> = (props) => {
   const [observeInteraction] = createViewportObserver({ threshold: 0.4 });
   let playgroundRef!: HTMLElement;
 
-  onMount(() => {
+  onSettled(() => {
     observeInteraction(playgroundRef, (entry) => entry.isIntersecting && setLoadRepl(true));
-  });
-
-  createEffect(() => {
-    if (isRouting()) {
-      setLoadRepl(false);
-    }
   });
 
   useRouteReadyState();
@@ -100,11 +91,13 @@ const Home: Component<{ data: { benchmarks: GraphData[] } }> = (props) => {
                 );
                 return (
                   <li
-                    class="transition border-gray-100 dark:border-solid-darkLighterBg border-r-0 md:border-r last:border-r-0"
-                    classList={{
-                      'hover:bg-solid-dark': !!fact.link,
-                      'hover:text-white': !!fact.link,
-                    }}
+                    class={[
+                      'transition border-gray-100 dark:border-solid-darkLighterBg border-r-0 md:border-r last:border-r-0',
+                      {
+                        'hover:bg-solid-dark': !!fact.link,
+                        'hover:text-white': !!fact.link,
+                      },
+                    ]}
                   >
                     {fact.link ? (
                       <a
@@ -136,7 +129,7 @@ const Home: Component<{ data: { benchmarks: GraphData[] } }> = (props) => {
             class="rounded-lg shadow-2xl order-2 xl:order-1 rtl:order-2 mt-10 lg:mt-0 flex flex-col outline-2 outline outline-gray-200 dark:outline-solid-darkLighterBg"
           >
             <Show when={loadRepl()}>
-              <Suspense
+              <Loading
                 fallback={
                   <div class="flex h-full justify-center items-center">Starting playground...</div>
                 }
@@ -146,7 +139,7 @@ const Home: Component<{ data: { benchmarks: GraphData[] } }> = (props) => {
                     {
                       name: 'main.jsx',
                       source: `import { onCleanup, createSignal } from "solid-js";
-import { render } from "solid-js/web";
+import { render } from '@solidjs/web';
 
 const CountingComponent = () => {
   const [count, setCount] = createSignal(0);
@@ -160,16 +153,9 @@ const CountingComponent = () => {
 
 render(() => <CountingComponent />, document.getElementById("app"));`,
                     },
-                    {
-                      name: 'import_map.json',
-                      source: `{
-  "solid-js": "https://jspm.dev/solid-js",
-  "solid-js/web": "https://jspm.dev/solid-js/web"
-}`,
-                    },
                   ]}
                 />
-              </Suspense>
+              </Loading>
             </Show>
           </div>
           <div class="flex flex-col justify-center order-1 xl:order-2 rtl:order-1">
@@ -180,18 +166,20 @@ render(() => <CountingComponent />, document.getElementById("app"));`,
             <For each={t('home.example.copy')}>
               {(copy: string) => <p class="mt-9 leading-7">{copy}</p>}
             </For>
-            <A
+            <a
               class={`button inline-block mt-8 text-solid-default dark:text-solid-darkdefault font-semibold hover:text-gray-500 dark:hover:text-gray-300 ${chevron()}`}
               href={t('home.example.link')}
             >
               {t('home.example.link_label')}
-            </A>
+            </a>
           </div>
         </section>
         <section class="dark:bg-solid-darkLighterBg bg-solid-lightgray py-16 grid grid-cols-1 lg:grid-cols-2 md:px-5 lg:px-16 defer rounded-br-6xl lg:bg-blocks-three bg-no-repeat bg-contain bg-right rtl:bg-left">
           <div
-            class="px-10 py-4 2xl:bg-opacity-0 bg-opacity-80 rounded-lg"
-            classList={{ 'xl:bg-opacity-0': ctx.dir === 'ltr' }}
+            class={[
+              'px-10 py-4 2xl:bg-opacity-0 bg-opacity-80 rounded-lg',
+              { 'xl:bg-opacity-0': ctx.dir === 'ltr' },
+            ]}
           >
             <img class="w-16" src={sandbox} alt="" />
             <h2 class="text-3xl mt-8 mb-5 text-solid font-semibold">

@@ -39,7 +39,7 @@ const Chart: Component<{
     }
   };
   const options = createMemo(() =>
-    props.rows.sort(sortFn(props.sort)).map((row) => ({
+    [...props.rows].sort(sortFn(props.sort)).map((row) => ({
       ...row,
       width: `${(row.score / maxValue()) * 100}%`,
     })),
@@ -53,8 +53,7 @@ const Chart: Component<{
         <For each={options()}>
           {(row) => {
             let chartRef: HTMLDivElement;
-            const useVisibilityObserver = createVisibilityObserver();
-            const isVisible = useVisibilityObserver(() => chartRef);
+            const isVisible = createVisibilityObserver(() => chartRef, { initialValue: false });
             return (
               <tr>
                 <td class="w-1/6 text-xs">{row.label}</td>
@@ -64,11 +63,13 @@ const Chart: Component<{
                     class="relative z-10 rounded-3xl overflow-hidden"
                   >
                     <div
-                      class="transition-transform -translate-x-full duration-700 w-full h-full rounded-3xl ltr:text-right rtl:text-left text-xxs py-1"
-                      classList={{
-                        'bg-solid-light text-white font-semibold': row.active,
-                        'bg-gray-100 dark:bg-solid-darkLighterBg': !row.active,
-                      }}
+                      class={[
+                        'transition-transform -translate-x-full duration-700 w-full h-full rounded-3xl ltr:text-right rtl:text-left text-xxs py-1',
+                        {
+                          'bg-solid-light text-white font-semibold': row.active,
+                          'bg-gray-100 dark:bg-solid-darkLighterBg': !row.active,
+                        },
+                      ]}
                       style={{
                         width: row.width,
                         transform: `translateX(${
@@ -95,7 +96,7 @@ const Chart: Component<{
         {!options().length ? (
           <tr>
             <td>&nbsp;</td>
-            <td colSpan="2">No data has been supplied.</td>
+            <td colspan="2">No data has been supplied.</td>
           </tr>
         ) : null}
         <tr>
@@ -139,11 +140,13 @@ const Benchmarks: Component<{ list: Array<GraphData> }> = (props) => {
             return (
               <button
                 onClick={() => setCurrent(index)}
-                class="text-xs lg:mr-1 p-3 rounded md:hover:bg-gray-400 dark:md:hover:bg-gray-400 transition duration-150 hover:text-white"
-                classList={{
-                  'active text-white bg-solid-light': current() === index,
-                  'bg-gray-100 dark:bg-gray-500': current() !== index,
-                }}
+                class={[
+                  'text-xs lg:mr-1 p-3 rounded md:hover:bg-gray-400 dark:md:hover:bg-gray-400 transition duration-150 hover:text-white',
+                  {
+                    'active text-white bg-solid-light': current() === index,
+                    'bg-gray-100 dark:bg-gray-500': current() !== index,
+                  },
+                ]}
               >
                 {item.name}
               </button>

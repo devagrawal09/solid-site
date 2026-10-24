@@ -3,6 +3,6 @@ declare module 'github-slugger' {
 }
 
 declare module '*.mdx' {
-  let MDXComponent: (props) => JSX.Element;
+  const MDXComponent: import('./pages/Blog.data').MDXComponent;
   export default MDXComponent;
 }

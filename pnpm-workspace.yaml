@@ -1,0 +1,18 @@
+packages:
+  - packages/*
+
+overrides:
+  'solid-js': '2.0.0-rc.18'
+  '@solidjs/web': '2.0.0-rc.18'
+  '@solidjs/signals': '2.0.0-rc.18'
+  '@solid.js/docs>solid-jsx': 'link:./packages/docs-jsx'
+
+allowBuilds:
+  esbuild@0.27.2: true
+  'solid-repl@https://codeload.github.com/devagrawal09/solid-playground/tar.gz/176823cf1fa6214aad8cdbbe13bf6970bc5fb059#path:/packages/solid-repl': true
+
+minimumReleaseAgeExclude:
+  - '@solidjs/web@2.0.0-rc.18'
+  - '@solidjs/signals@2.0.0-rc.18'
+  - '@solidjs/babel-plugin@2.0.0-rc.18'
+  - solid-js@2.0.0-rc.18

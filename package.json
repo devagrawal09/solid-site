@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "license": "MIT",
   "engines": {
-    "node": ">=16.0.0",
-    "pnpm": ">=9.1.4"
+    "node": ">=22.12.0",
+    "pnpm": ">=12.11.2"
   },
   "type": "module",
   "scripts": {
-    "build": "run-s format type:check build:vite build:postoptimize",
+    "build": "run-s type:check build:vite build:postoptimize",
     "preview": "vite preview",
     "https-preview": "vite build && serve dist",
     "dev": "vite",
@@ -16,44 +16,37 @@
     "build:postoptimize": "node ./postoptimize.mjs",
     "build:sitemap": "jiti scripts/generateSitemap.js",
     "type:check": "tsc --noEmit",
-    "format": "prettier -w \"src/**/*.{js,ts,json,css,tsx,jsx}\" \"*.{js,ts,mjs}\"",
+    "format": "prettier -w \"src/**/*.{js,ts,json,css,tsx,jsx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\"",
     "deploy:dev": "wrangler publish --env development",
-    "deploy:prod": "wrangler publish --env production"
+    "deploy:prod": "wrangler publish --env production",
+    "format:check": "prettier --check \"src/**/*.{js,ts,json,css,tsx,jsx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\"",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.6.3",
-    "@solid-primitives/clipboard": "^1.6.6",
-    "@solid-primitives/date": "^2.1.8",
-    "@solid-primitives/event-listener": "^2.4.6",
-    "@solid-primitives/i18n": "^2.2.1",
-    "@solid-primitives/intersection-observer": "^2.2.5",
-    "@solid-primitives/scheduled": "^1.5.3",
-    "@solid-primitives/scroll": "^2.1.6",
-    "@solid-primitives/storage": "^2.1.4",
-    "@solid-primitives/utils": "^6.4.1",
+    "@solid-primitives/event-listener": "3.0.0-next.9",
+    "@solid-primitives/i18n": "3.0.0-next.6",
+    "@solid-primitives/intersection-observer": "3.0.0-next.5",
+    "@solid-primitives/scheduled": "2.0.0-next.4",
+    "@solid-primitives/storage": "5.0.0-next.7",
+    "@solid-primitives/utils": "7.0.0-next.7",
     "@solid.js/docs": "^1.0.56",
-    "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.13.1",
+    "@solidjs/meta": "1.0.0-next.2",
+    "@solidjs/router": "2.0.0-next.42",
     "@types/shopify-buy": "npm:@brandboostinggmbh/shopify-buy-types@^2.14.6",
-    "babel-preset-solid": "1.9.16",
     "fuse.js": "^7.1.0",
     "github-slugger": "^2.0.0",
     "highlight.js": "^11.9.0",
-    "monaco-editor": "0.47.0",
-    "monaco-editor-textmate": "^4.0.0",
-    "monaco-textmate": "^3.0.1",
-    "onigasm": "^2.2.5",
     "rehype-highlight": "^7.0.0",
     "remark-gfm": "^4.0.0",
     "scroll-behavior-polyfill": "^2.0.13",
     "shopify-buy": "^3.0.0",
-    "solid-dismiss": "^1.8.2",
-    "solid-heroicons": "<3.0.0",
-    "solid-js": "1.9.17",
-    "solid-repl": "^0.25.0",
-    "solid-social": "^0.9.6",
-    "solid-transition-group": "^0.2.3",
-    "solid-utils": "^0.8.1"
+    "solid-js": "2.0.0-rc.18",
+    "@solidjs/web": "2.0.0-rc.18",
+    "@solid-primitives/transition-group": "2.0.0-next.4",
+    "@solidjs/signals": "2.0.0-rc.18",
+    "@solid-site/docs-jsx": "link:./packages/docs-jsx",
+    "solid-repl": "github:devagrawal09/solid-playground#176823cf1fa6214aad8cdbbe13bf6970bc5fb059&path:/packages/solid-repl"
   },
   "devDependencies": {
     "@aminya/minijson": "^1.1.0",
@@ -75,25 +68,15 @@
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.38",
     "prettier": "^3.2.5",
-    "solid-mdx": "^0.0.7",
     "svgo": "^3.2.0",
     "tailwindcss": "^3.4.1",
     "tailwindcss-dir": "^4.0.0",
     "tailwindcss-rtl": "^0.9.0",
     "terser-config-atomic": "^1.0.0",
     "typescript": "^5.9.2",
-    "vite": "^7.3.0",
-    "vite-plugin-pwa": "^0.19.6",
-    "vite-plugin-solid": "2.11.14"
+    "vite": "8.3.5",
+    "@solidjs/vite-plugin": "3.0.0-next.51",
+    "@playwright/test": "1.64.1"
   },
-  "resolutions": {
-    "solid-js": "1.9.17",
-    "@rollup/pluginutils": "5.1.0"
-  },
-  "packageManager": "pnpm@10.17.1",
-  "pnpm": {
-    "patchedDependencies": {
-      "monaco-editor@0.47.0": "patches/monaco-editor@0.47.0.patch"
-    }
-  }
+  "packageManager": "pnpm@12.11.2"
 }

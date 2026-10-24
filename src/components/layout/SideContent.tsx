@@ -1,7 +1,8 @@
-import Dismiss from 'solid-dismiss';
-import { Icon } from 'solid-heroicons';
-import { chevronRight } from 'solid-heroicons/outline';
-import { Accessor, Component, JSX, Setter } from 'solid-js';
+import Dismiss from '../Dismiss';
+import { Icon } from '../icons/Icon';
+import { chevronRight } from '../icons/outline';
+import { Accessor, Component, Setter } from 'solid-js';
+import type { JSX } from '@solidjs/web';
 import { routeReadyState, useRouteReadyState } from '../../utils/routeReadyState';
 
 const SideContent: Component<{
@@ -19,11 +20,13 @@ const SideContent: Component<{
       <div class="flex container">
         <div class="absolute z-20 left-0 h-full lg:static lg:w-3/12 bg-gray-100 dark:bg-gray-900 rounded-br-lg">
           <button
-            class={`fixed lg:hidden top-20 right-3 text-white rounded-lg transition duration-500 bg-solid-medium reveal-delay`}
-            classList={{
-              'rotate-90': props.toggleVisible(),
-              'opacity-0': routeReadyState().routeChanged,
-            }}
+            class={[
+              `fixed lg:hidden top-20 right-3 text-white rounded-lg transition duration-500 bg-solid-medium reveal-delay`,
+              {
+                'rotate-90': props.toggleVisible(),
+                'opacity-0': routeReadyState().routeChanged,
+              },
+            ]}
             ref={menuButton}
           >
             <Icon class="h-7 w-7" path={chevronRight} />
@@ -36,16 +39,16 @@ const SideContent: Component<{
             setOpen={props.setToggleVisible}
           >
             <div
-              class={
+              class={[
                 'w-[85vw] overflow-auto p-10 shadow-2xl bg-white dark:bg-solid-darkbg border-gray-100 ' +
-                'dark:bg-solid-darkLighterBg fixed left-0 top-14 lg:bg-transparent lg:translate-x-0 lg:duration-0 transition-transform ' +
-                'duration-300 max-w-md lg:w-auto lg:border-0 lg:shadow-none lg:p-0 lg:flex-col lg:top-12 ' +
-                'relative lg:flex z-50'
-              }
-              classList={{
-                '-translate-x-full shadow-none': !props.toggleVisible(),
-                'translate-x-0 shadow-2xl': props.toggleVisible(),
-              }}
+                  'dark:bg-solid-darkLighterBg fixed left-0 top-14 lg:bg-transparent lg:translate-x-0 lg:duration-0 transition-transform ' +
+                  'duration-300 max-w-md lg:w-auto lg:border-0 lg:shadow-none lg:p-0 lg:flex-col lg:top-12 ' +
+                  'relative lg:flex z-50',
+                {
+                  '-translate-x-full shadow-none': !props.toggleVisible(),
+                  'translate-x-0 shadow-2xl': props.toggleVisible(),
+                },
+              ]}
               style={{ height: 'calc(100vh - 4rem)', top: 0 }}
             >
               {props.aside}

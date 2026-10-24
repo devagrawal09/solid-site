@@ -2,7 +2,11 @@ import { type Component, For } from 'solid-js';
 import downloadArrow from '../assets/download-arrow.svg';
 import Footer from '../components/Footer';
 import { useRouteReadyState } from '../utils/routeReadyState';
-import { copyToClipboard } from '@solid-primitives/clipboard';
+import type { JSX } from '@solidjs/web';
+
+const copyToClipboard: JSX.EventHandler<HTMLElement, MouseEvent> = (event) => {
+  void navigator.clipboard.writeText(event.currentTarget.textContent?.trim() || '');
+};
 import { useAppState } from '../AppContext';
 import { Title } from '@solidjs/meta';
 
@@ -110,7 +114,6 @@ const AssetPanel: Component<{
 
 const Media: Component = () => {
   const { t } = useAppState();
-  copyToClipboard;
   useRouteReadyState();
 
   return (
@@ -126,31 +129,31 @@ const Media: Component = () => {
             </div>
             <div class="flex h-36 bg-solid-default p-4 justify-between items-end text-white between">
               <div>{t('media.primary')}</div>
-              <div class="text-sm cursor-pointer hover:opacity-50" use:copyToClipboard>
+              <div class="text-sm cursor-pointer hover:opacity-50" onClick={copyToClipboard}>
                 #2c4f7c
               </div>
             </div>
             <div class="flex h-28 bg-solid-medium p-4 justify-between items-end text-white">
               <div>{t('media.secondary')}</div>
-              <div class="text-sm cursor-pointer hover:opacity-50" use:copyToClipboard>
+              <div class="text-sm cursor-pointer hover:opacity-50" onClick={copyToClipboard}>
                 #335d92
               </div>
             </div>
             <div class="flex h-20 p-4 bg-solid-light justify-between items-end text-white">
               <div>{t('media.light')}</div>
-              <div class="text-sm cursor-pointer hover:opacity-50" use:copyToClipboard>
+              <div class="text-sm cursor-pointer hover:opacity-50" onClick={copyToClipboard}>
                 #446b9e
               </div>
             </div>
             <div class="flex h-20 p-4 bg-solid-accent justify-between items-end text-white">
               <div>{t('media.accent')}</div>
-              <div class="text-sm cursor-pointer hover:opacity-50" use:copyToClipboard>
+              <div class="text-sm cursor-pointer hover:opacity-50" onClick={copyToClipboard}>
                 #66e6ac
               </div>
             </div>
             <div class="flex h-20 p-4 bg-solid-secondaccent justify-between items-end text-white">
               <div>{t('media.second_accent')}</div>
-              <div class="text-sm cursor-pointer hover:opacity-50" use:copyToClipboard>
+              <div class="text-sm cursor-pointer hover:opacity-50" onClick={copyToClipboard}>
                 #0CDC73
               </div>
             </div>

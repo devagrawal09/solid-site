@@ -1,9 +1,9 @@
 import { type Component, Show, createMemo } from 'solid-js';
-import { A } from '@solidjs/router';
+
 import { useRouteReadyState } from '../utils/routeReadyState';
 import Footer from '../components/Footer';
 import { useAppState } from '../AppContext';
-import { YouTube, Tweet, Twitch, Spotify } from 'solid-social';
+import { YouTube, Tweet, Twitch, Spotify } from '../components/embeds';
 import type { BlogArticleData } from './BlogArticle.data';
 import { Title } from '@solidjs/meta';
 
@@ -60,9 +60,9 @@ export const BlogArticle: Component<{ data: BlogArticleData }> = (props) => {
                 </article>
                 <hr class="mt-10 w-3/6 mx-auto" />
                 <div class="flex flex-row justify-center mt-10">
-                  <A href="/blog">
+                  <a href="/blog">
                     <figure class={`inline-block chevron ${chevron()}`} /> Back to the SolidJS Blog
-                  </A>
+                  </a>
                 </div>
               </div>
             </Show>

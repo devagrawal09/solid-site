@@ -1,13 +1,13 @@
-import { DAY, createTimeAgo } from '@solid-primitives/date';
+import { DAY, createTimeAgo } from '../utils/relativeTime';
 import { makeIntersectionObserver } from '@solid-primitives/intersection-observer';
 import { debounce } from '@solid-primitives/scheduled';
 import { useSearchParams } from '@solidjs/router';
 import Fuse from 'fuse.js';
-import Dismiss from 'solid-dismiss';
-import { Icon } from 'solid-heroicons';
-import { chevronLeft, chevronRight, filter, shieldCheck } from 'solid-heroicons/outline';
-import { type Component, For, Show, createMemo, createSignal } from 'solid-js';
-import { createStore } from 'solid-js/store';
+import Dismiss from '../components/Dismiss';
+import { Icon } from '../components/icons/Icon';
+import { chevronLeft, chevronRight, filter, shieldCheck } from '../components/icons/outline';
+import { type Component, For, Show, createMemo, createSignal, untrack } from 'solid-js';
+import { createStore } from 'solid-js';
 import { Title } from '@solidjs/meta';
 import { useAppState } from '../AppContext';
 import Footer from '../components/Footer';
@@ -25,8 +25,7 @@ import {
 const AResource: Component<Resource> = (props) => {
   const { t } = useAppState();
 
-  const published = new Date(0);
-  published.setTime(props.published_at || 0);
+  const published = createMemo(() => new Date(props.published_at || 0));
 
   const [publishTimeAgo, { difference }] = createTimeAgo(published);
 
@@ -73,7 +72,7 @@ const AResource: Component<Resource> = (props) => {
             </div>
             <Show when={props.published_at}>
               <div class="rtl:text-right text-xs text-gray-400 block">
-                {t('resources.published')} {published.toDateString()}
+                {t('resources.published')} {published().toDateString()}
                 <Show when={difference() / DAY < 60}>
                   <span class="text-gray-300"> - {publishTimeAgo()}</span>
                 </Show>
@@ -104,7 +103,9 @@ const Resources: Component<{ data: ResourcesDataProps }> = (props) => {
     threshold: 0.3,
   });
   const [searchParams] = useSearchParams();
-  const [keyword, setKeyword] = createSignal(parseKeyword(searchParams.search || ''));
+  const [keyword, setKeyword] = createSignal(
+    untrack(() => parseKeyword(typeof searchParams.search === 'string' ? searchParams.search : '')),
+  );
   const debouncedKeyword = debounce((str: string) => setKeyword(str), 250);
   rememberSearch(keyword);
   const resources = createMemo(() => {
@@ -194,22 +195,24 @@ const Resources: Component<{ data: ResourcesDataProps }> = (props) => {
                   disabled={!filtered.counts[type]}
                   onClick={() => {
                     filtersClickScrollToTop();
-                    setFiltered('enabledTypes', (arr) => {
+                    setFiltered((draft) => {
+                      const arr = draft.enabledTypes;
                       const pos = arr.indexOf(type);
                       if (pos === -1) {
-                        return [...arr, type];
+                        draft.enabledTypes.push(type);
+                        return;
                       }
-                      const newArray = arr.slice();
-                      newArray.splice(pos, 1);
-                      return newArray;
+                      draft.enabledTypes.splice(pos, 1);
                     });
                   }}
-                  classList={{
-                    'opacity-30 cursor-default': !filtered.counts[type],
-                    'hover:opacity-60': !!filtered.counts[type],
-                    'bg-gray-100 dark:bg-gray-700': filtered.enabledTypes.indexOf(type) !== -1,
-                  }}
-                  class="grid grid-cols-5 lg:grid-cols-6 items-center w-full text-sm py-3 text-left border rounded-md dark:border-solid-darkLighterBg"
+                  class={[
+                    'grid grid-cols-5 lg:grid-cols-6 items-center w-full text-sm py-3 text-left border rounded-md dark:border-solid-darkLighterBg',
+                    {
+                      'opacity-30 cursor-default': !filtered.counts[type],
+                      'hover:opacity-60': !!filtered.counts[type],
+                      'bg-gray-100 dark:bg-gray-700': filtered.enabledTypes.indexOf(type) !== -1,
+                    },
+                  ]}
                 >
                   <div class="col-span-1 lg:col-span-2 flex justify-center px-2">
                     <figure class="flex justify-center content-center w-10 h-10 p-1.5 border-4 border-solid rounded-full text-white flex-shrink-0">
@@ -235,14 +238,16 @@ const Resources: Component<{ data: ResourcesDataProps }> = (props) => {
 
         <div class="md:hidden sticky z-10 top-[60px] py-3 pt-4 bg-white w-[calc(100%+40px)] -ml-5">
           <div
-            class="absolute h-full top-0 left-3 right-3 rounded-[12%] bg-white z-negative"
-            classList={{
-              'shadow-md': stickyBarActive(),
-            }}
+            class={[
+              'absolute h-full top-0 left-3 right-3 rounded-[12%] bg-white z-negative',
+              {
+                'shadow-md': stickyBarActive(),
+              },
+            ]}
           />
           <div class="absolute w-full h-full top-0 left-0 bg-white dark:bg-neutral-600 z-negative" />
           <div class="h-[45px] px-5 flex justify-between gap-1">
-            <div use:intersectionObserver class="absolute top-[-62px] h-0" />
+            <div ref={intersectionObserver} class="absolute top-[-62px] h-0" />
             <input
               class="rounded border border-solid h-full w-full border-gray-400 p-3 placeholder-opacity-50 placeholder-gray-500 dark:bg-gray-500 dark:placeholder-gray-200"
               placeholder={t('resources.search')}
@@ -288,22 +293,24 @@ const Resources: Component<{ data: ResourcesDataProps }> = (props) => {
                   disabled={!filtered.counts[type]}
                   onClick={() => {
                     filtersClickScrollToTop();
-                    setFiltered('enabledTypes', (arr) => {
+                    setFiltered((draft) => {
+                      const arr = draft.enabledTypes;
                       const pos = arr.indexOf(type);
                       if (pos === -1) {
-                        return [...arr, type];
+                        draft.enabledTypes.push(type);
+                        return;
                       }
-                      const newArray = arr.slice();
-                      newArray.splice(pos, 1);
-                      return newArray;
+                      draft.enabledTypes.splice(pos, 1);
                     });
                   }}
-                  classList={{
-                    'opacity-30 cursor-default': !filtered.counts[type],
-                    'hover:opacity-60': !!filtered.counts[type],
-                    'bg-gray-100 dark:bg-gray-700': filtered.enabledTypes.indexOf(type) !== -1,
-                  }}
-                  class="grid grid-cols-5 lg:grid-cols-6 items-center w-full text-sm py-3 text-left border rounded-md"
+                  class={[
+                    'grid grid-cols-5 lg:grid-cols-6 items-center w-full text-sm py-3 text-left border rounded-md',
+                    {
+                      'opacity-30 cursor-default': !filtered.counts[type],
+                      'hover:opacity-60': !!filtered.counts[type],
+                      'bg-gray-100 dark:bg-gray-700': filtered.enabledTypes.indexOf(type) !== -1,
+                    },
+                  ]}
                 >
                   <div class="col-span-1 lg:col-span-2 flex justify-center px-2">
                     <figure class="flex justify-center content-center w-10 h-10 p-1.5 border-4 border-solid rounded-full text-white">
@@ -332,7 +339,7 @@ const Resources: Component<{ data: ResourcesDataProps }> = (props) => {
             when={filtered.list.length !== 0}
             fallback={<div class="p-10 text-center">No resources found.</div>}
           >
-            <ul>
+            <ul aria-label="Resources">
               <For each={filtered.list}>{(resource) => <AResource {...resource} />}</For>
             </ul>
           </Show>

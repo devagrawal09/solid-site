@@ -1,5 +1,5 @@
-import { createMemo, createResource, createSignal, Resource, Accessor, onMount } from 'solid-js';
-import { createStore } from 'solid-js/store';
+import { createMemo, createSignal, refresh, type Accessor, onSettled } from 'solid-js';
+import { createStore } from 'solid-js';
 import { access } from '@solid-primitives/utils';
 import Client from 'shopify-buy';
 
@@ -82,7 +82,7 @@ export const createCart = (
       return total;
     },
     get tax() {
-      return parseFloat(this.cart.totalPriceV2.amount);
+      return parseFloat(this.cart.totalPriceV2?.amount || '0');
     },
     get checkoutURL() {
       return this.cart.webUrl;
@@ -95,8 +95,8 @@ export const createCart = (
       }
     },
     get total() {
-      if (this.cart.totalPriceV2.amount) {
-        return parseFloat(this.cart.totalPriceV2.amount);
+      if (this.cart.totalPriceV2?.amount) {
+        return parseFloat(this.cart.totalPriceV2?.amount || '0');
       } else {
         return 0;
       }
@@ -112,7 +112,10 @@ export const createCart = (
   const create = async () => {
     setLoading(true);
     try {
-      setData('cart', await checkout.create());
+      const cart = await checkout.create();
+      setData((draft) => {
+        draft.cart = cart;
+      });
     } catch (err) {
       console.error(err);
     }
@@ -124,7 +127,9 @@ export const createCart = (
     if (cart.orderStatusUrl !== null) {
       return await create();
     }
-    setData('cart', cart);
+    setData((draft) => {
+      draft.cart = cart;
+    });
     setLoading(false);
   };
   const retrieve = (checkout_id?: string | number) => {
@@ -145,16 +150,28 @@ export const createCart = (
     });
   };
   const add = async (items: Client.LineItemToAdd[]) => {
-    setData('cart', await checkout.addLineItems(access(data.cart.id), items));
+    const cart = await checkout.addLineItems(access(data.cart.id), items);
+    setData((draft) => {
+      draft.cart = cart;
+    });
   };
   const update = async (items: Client.AttributeInput[]) => {
-    setData('cart', await checkout.updateLineItems(access(data.cart.id), items));
+    const cart = await checkout.updateLineItems(access(data.cart.id), items);
+    setData((draft) => {
+      draft.cart = cart;
+    });
   };
   const remove = async (items: string[]) => {
-    setData('cart', await checkout.removeLineItems(access(data.cart.id), items));
+    const cart = await checkout.removeLineItems(access(data.cart.id), items);
+    setData((draft) => {
+      draft.cart = cart;
+    });
   };
   const updateAttributes = async (customAttributes: Client.CustomAttribute[]) => {
-    setData('cart', await checkout.updateAttributes(data.cart.id, { customAttributes }));
+    const cart = await checkout.updateAttributes(data.cart.id, { customAttributes });
+    setData((draft) => {
+      draft.cart = cart;
+    });
   };
   const setAttribute = async (key: string, value: string) => {
     const attrs = data.attributes.reduce(
@@ -175,12 +192,18 @@ export const createCart = (
     );
   };
   const addDiscount = async (code: string) => {
-    setData('cart', await checkout.addDiscount(data.cart.id, code));
+    const cart = await checkout.addDiscount(data.cart.id, code);
+    setData((draft) => {
+      draft.cart = cart;
+    });
   };
   const removeDiscount = async () => {
-    setData('cart', await checkout.removeDiscount(data.cart.id));
+    const cart = await checkout.removeDiscount(data.cart.id);
+    setData((draft) => {
+      draft.cart = cart;
+    });
   };
-  onMount(() => {
+  onSettled(() => {
     if (checkout_id == null) {
       create().catch((err) => console.log(err));
     } else if (checkout_id) {
@@ -215,7 +238,7 @@ export const createCollection = (
   options: ShopifyOptions & {
     language?: 'en-US';
   },
-): [products: Resource<Client.CollectionWithProducts | undefined>, refetch: VoidFunction] => {
+): [products: Accessor<Client.CollectionWithProducts>, refetch: VoidFunction] => {
   const client =
     options.client ||
     Client.buildClient({
@@ -223,10 +246,13 @@ export const createCollection = (
       storefrontAccessToken: options.token,
       language: options.language,
     });
-  const [products, { refetch }] = createResource(collectionId, async (id) =>
-    client.collection.fetchWithProducts(id),
-  );
-  return [products, refetch];
+  const products = createMemo(() => client.collection.fetchWithProducts(collectionId()));
+  return [
+    products,
+    () => {
+      void refresh(products);
+    },
+  ];
 };
 
 /**
@@ -238,7 +264,7 @@ export const createCollectionList = (
   options: ShopifyOptions & {
     language?: 'en-US';
   },
-): [collections: Resource<Client.CollectionWithProducts[] | undefined>, refetch: () => void] => {
+): [collections: Accessor<Client.CollectionWithProducts[]>, refetch: () => void] => {
   const client =
     options.client ||
     Client.buildClient({
@@ -246,10 +272,13 @@ export const createCollectionList = (
       storefrontAccessToken: options.token,
       language: options.language,
     });
-  const [collections, { refetch }] = createResource(async () =>
-    client.collection.fetchAllWithProducts(),
-  );
-  return [collections, refetch];
+  const collections = createMemo(() => client.collection.fetchAllWithProducts());
+  return [
+    collections,
+    () => {
+      void refresh(collections);
+    },
+  ];
 };
 
 /**
@@ -266,13 +295,7 @@ export const createProduct = (
   options: ShopifyOptions & {
     language?: 'en-US';
   },
-): [
-  Resource<Client.Product | null | undefined>,
-  Accessor<Client.Image[]>,
-  (
-    info?: unknown,
-  ) => Client.Product | Promise<Client.Product | null | undefined> | null | undefined,
-] => {
+): [Accessor<Client.Product | null | undefined>, Accessor<Client.Image[]>, () => void] => {
   const client =
     options.client ||
     Client.buildClient({
@@ -280,20 +303,27 @@ export const createProduct = (
       storefrontAccessToken: options.token,
       language: options.language,
     });
-  const [details, { refetch }] = createResource(identifier, async (identifier) => {
-    if (identifier.handle) {
-      return client.product.fetchByHandle(identifier.handle);
-    } else if (identifier.id) {
-      return client.product.fetch(identifier.id);
+  const details = createMemo(async () => {
+    const value = identifier();
+    if (value.handle) {
+      return client.product.fetchByHandle(value.handle);
+    } else if (value.id) {
+      return client.product.fetch(value.id);
     }
     return null;
   });
   const images = () => {
     const dts = details();
-    if (dts) dts.images;
+    if (dts) return dts.images;
     return [];
   };
-  return [details, images, refetch];
+  return [
+    details,
+    images,
+    () => {
+      void refresh(details);
+    },
+  ];
 };
 
 export default createCart;

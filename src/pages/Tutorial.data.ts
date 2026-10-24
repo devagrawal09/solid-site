@@ -1,5 +1,5 @@
-import type { RouteLoadFunc } from '@solidjs/router';
-import { createResource } from 'solid-js';
+import type { RouteDataFactory } from '../utils/routeData';
+import { createMemo, isPending, type Component } from 'solid-js';
 import { getTutorial, getTutorialDirectory, type LessonLookup } from '@solid.js/docs';
 import { useAppState } from '../AppContext';
 
@@ -9,7 +9,7 @@ type JsFiles = {
 
 export interface TutorialRouteData {
   loading: boolean;
-  markdown?: string;
+  markdown?: Component;
   js?: JsFiles;
   solvedJs?: JsFiles;
   tutorialDirectory?: Record<string, LessonLookup[]>;
@@ -22,15 +22,17 @@ export interface TutorialRouteData {
   solved?: boolean;
 }
 
-export const TutorialData: RouteLoadFunc<TutorialRouteData> = (props) => {
+export const TutorialData: RouteDataFactory<TutorialRouteData> = (props) => {
   const ctx = useAppState();
   const paramList = () => ({ lang: ctx.locale, id: props.params.id || 'introduction_basics' });
-  const [directory] = createResource(paramList, async ({ lang }) => {
+  const directory = createMemo(async () => {
+    const lang = ctx.locale;
     const requestedLang = await getTutorialDirectory(lang);
     if (requestedLang) return requestedLang;
     return await getTutorialDirectory('en');
   });
-  const [data] = createResource(paramList, async ({ lang, id }) => {
+  const data = createMemo(async () => {
+    const { lang, id } = paramList();
     const requestedLang = await getTutorial(lang, id);
     if (requestedLang?.lesson) return requestedLang;
     return await getTutorial('en', id);
@@ -41,10 +43,11 @@ export const TutorialData: RouteLoadFunc<TutorialRouteData> = (props) => {
 
   return {
     get loading() {
-      return data.loading;
+      return isPending(data);
     },
     get markdown() {
-      return data()?.markdown;
+      const content: unknown = data()?.markdown;
+      return typeof content === 'function' ? (content as Component) : undefined;
     },
     get js() {
       return data()?.lesson as JsFiles;

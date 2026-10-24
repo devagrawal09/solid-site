@@ -1,31 +1,22 @@
-import {
-  ParentComponent,
-  Switch,
-  Match,
-  Show,
-  on,
-  createEffect,
-  createSignal,
-  createMemo,
-} from 'solid-js';
-import { Transition } from 'solid-transition-group';
-import { useLocation, A } from '@solidjs/router';
+import { ParentComponent, Switch, Match, Show, createMemo } from 'solid-js';
+import { Transition } from './Transition';
+import { useLocation } from '@solidjs/router';
 import Nav from './Nav';
 import { useAppState } from '../AppContext';
 import logo from '../assets/logo.svg';
 import wordmark from '../assets/wordmark.svg';
-import { chevronRight, play } from 'solid-heroicons/outline';
-import { Icon } from 'solid-heroicons';
+import { chevronRight, play } from './icons/outline';
+import { Icon } from './icons/Icon';
 import PageLoadingBar from './LoadingBar/PageLoadingBar';
 import { routeReadyState, page } from '../utils/routeReadyState';
 
 const Header: ParentComponent<{ title?: string }> = () => {
   const location = useLocation();
-  const isHome = location.pathname === '/';
-  const noSmallHeader = !isHome && !location.pathname.includes('tutorial');
-  const [showLogo, setShowLogo] = createSignal(!isHome);
-  const [showHeaderSmall, setShowHeaderSmall] = createSignal(noSmallHeader);
-  const [showHeaderSplash, setShowHeaderSplash] = createSignal(isHome);
+  const showHeaderSplash = createMemo(() => location.pathname === '/');
+  const showHeaderSmall = createMemo(
+    () => location.pathname !== '/' && !location.pathname.includes('tutorial'),
+  );
+  const showLogo = createMemo(() => !showHeaderSplash());
 
   const context = useAppState();
   const { t } = context;
@@ -37,21 +28,6 @@ const Header: ParentComponent<{ title?: string }> = () => {
     }
   });
 
-  createEffect(
-    on(
-      routeReadyState,
-      (readyState) => {
-        if (readyState.loading) return;
-        const result = location.pathname !== '/';
-        const noHeaderSmall = result && !location.pathname.includes('tutorial');
-
-        setShowHeaderSmall(noHeaderSmall);
-        setShowLogo(result);
-        setShowHeaderSplash(!result);
-      },
-      { defer: true },
-    ),
-  );
   const Title: ParentComponent = (props) => (
     <span class="inline-block transition-all duration-200">{props.children}</span>
   );
@@ -104,31 +80,31 @@ const Header: ParentComponent<{ title?: string }> = () => {
                 </h2>
                 <div class="space-y-2 md:flex md:space-y-0 md:space-x-2">
                   <div>
-                    <A
+                    <a
                       href="https://docs.solidjs.com/quick-start"
                       class="bg-solid-medium flex justify-center items-center px-5 py-3 text-md rounded-lg hover:bg-solid-gray transition"
                     >
                       {t('home.get_started')}
                       <Icon stroke-width="3" class="w-5" path={chevronRight} />
-                    </A>
+                    </a>
                   </div>
                   <div class="flex flex-col space-y-1">
-                    <A
+                    <a
                       target="_blank"
                       href="https://www.youtube.com/watch?v=hw3Bx5vxKl0"
                       class="bg-solid-light flex items-center px-5 py-3 text-md rounded-lg hover:bg-solid-gray transition"
                     >
                       <Icon stroke-width="2" class="w-6 mr-2" path={play} />
                       {t('home.intro_video')}
-                    </A>
-                    <A
+                    </a>
+                    <a
                       target="_blank"
                       href="https://www.youtube.com/watch?v=cELFZQAMdhQ"
                       class="bg-solid-light bg-opacity-50 flex items-center px-5 py-3 text-md rounded-lg hover:bg-solid-gray transition"
                     >
                       <Icon stroke-width="2" class="w-6 mr-2" path={play} />
                       {t('home.intro_video_advanced')}
-                    </A>
+                    </a>
                   </div>
                 </div>
               </section>
@@ -193,155 +169,106 @@ const Header: ParentComponent<{ title?: string }> = () => {
 };
 
 const pageTransitionDuration = 500;
+type Movement = [element: HTMLElement, from: string, to: string];
+
+// Animation objects leave no inline transforms behind when navigation interrupts them.
+const animateHeader = (movements: Movement[], done?: () => void) => {
+  const animations = movements.map(([element, from, to]) =>
+    element.animate([{ transform: from }, { transform: to }], {
+      duration: pageTransitionDuration,
+      easing: 'ease',
+    }),
+  );
+  const cleanup = () => animations.forEach((animation) => animation.cancel());
+  void Promise.allSettled(animations.map((animation) => animation.finished)).then(() => {
+    cleanup();
+    done?.();
+  });
+  return cleanup;
+};
 
 const onEnterBigHeader = (el: Element) => {
-  requestAnimationFrame(() => {
-    const headerEl = el as HTMLElement;
-    const parentEl = headerEl.parentElement!;
-    const mainChildren = [...parentEl.children].filter((_, idx) => idx) as HTMLElement[];
-    const headerHeight = `${headerEl.clientHeight}px`;
-    const bannerEl = headerEl.firstElementChild as HTMLElement;
-    const elements = [headerEl, bannerEl, ...mainChildren];
-
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-    elements.forEach((el) => {
-      el.style.transform = `translateY(-${headerHeight})`;
-    });
-
-    bannerEl.style.transform = `translateY(${headerHeight})`;
-
-    requestAnimationFrame(() => {
-      elements.forEach((el) => {
-        el.style.transform = '';
-        el.style.transition = `transform ${pageTransitionDuration}ms`;
-      });
-
-      headerEl.addEventListener(
-        'transitionend',
-        (e) => {
-          if (e.target !== e.currentTarget) return;
-
-          elements.forEach((el) => {
-            el.style.transition = '';
-            el.style.transform = '';
-          });
-        },
-        { once: true },
-      );
-    });
+  let cleanup: (() => void) | undefined;
+  const frame = requestAnimationFrame(() => {
+    const header = el as HTMLElement;
+    const parent = header.parentElement;
+    if (!header.isConnected || !parent) return;
+    const banner = header.firstElementChild as HTMLElement;
+    const siblings = [...parent.children].filter((element) => element !== header) as HTMLElement[];
+    const height = header.clientHeight;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    cleanup = animateHeader([
+      ...[header, ...siblings].map(
+        (element): Movement => [element, `translateY(-${height}px)`, 'translateY(0)'],
+      ),
+      [banner, `translateY(${height}px)`, 'translateY(0)'],
+    ]);
   });
+  return () => {
+    cancelAnimationFrame(frame);
+    cleanup?.();
+  };
 };
 
 const onExitBigHeader = (el: Element, done: () => void) => {
-  const headerEl = el as HTMLElement;
-  const parentEl = headerEl.parentElement!;
-  const mainChildren = [...parentEl.children].filter((_, idx) => idx) as HTMLElement[];
-  const bannerEl = headerEl.firstElementChild as HTMLElement;
-  const headerHeight = headerEl.clientHeight;
-  const elements = [headerEl, bannerEl, ...mainChildren];
-
-  if (page.scrollY >= headerHeight) {
-    headerEl.style.height = '0px';
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-    return done();
-  }
-
-  elements.forEach((el) => {
-    el.style.transform = `translateY(-${headerHeight}px)`;
-    el.style.transition = `transform ${pageTransitionDuration}ms`;
-  });
-  bannerEl.style.transform = `translateY(${headerHeight}px)`;
-
-  const onTransitionEnd: EventListener = (e) => {
-    if (e.target !== e.currentTarget) return;
-    e.currentTarget?.removeEventListener('transitionend', onTransitionEnd);
-
-    elements.forEach((el) => {
-      el.style.transition = '';
-      el.style.transform = '';
-    });
-
-    done();
-  };
-
-  headerEl.addEventListener('transitionend', onTransitionEnd);
-};
-
-const onEnterSmallHeader = (el: Element) => {
-  requestAnimationFrame(() => {
-    const headerEl = el as HTMLElement;
-    const bgContainerEl = el.firstElementChild as HTMLElement;
-
-    const contentEl = bgContainerEl.firstElementChild as HTMLElement;
-    const mainContentChild = document.getElementById('main-content')
-      ?.firstElementChild as HTMLElement;
-    const headerHeight = `${bgContainerEl.clientHeight}px`;
-    const elements = [bgContainerEl, headerEl, contentEl, mainContentChild];
-
-    bgContainerEl.style.transform = `translateY(-100%)`;
-    contentEl.style.transform = `translateY(100%)`;
-    mainContentChild.style.transform = `translateY(-${headerHeight})`;
-
-    requestAnimationFrame(() => {
-      elements.forEach((el) => {
-        el.style.transform = 'translateY(0)';
-        el.style.transition = `transform ${pageTransitionDuration}ms`;
-      });
-
-      bgContainerEl.addEventListener(
-        'transitionend',
-        (e) => {
-          if (e.target !== e.currentTarget) return;
-
-          elements.forEach((el) => {
-            el.style.transition = '';
-            el.style.transform = '';
-          });
-        },
-        { once: true },
-      );
-    });
-  });
-};
-
-const onExitSmallHeader = (el: Element, done: () => void) => {
-  const headerEl = el as HTMLElement;
-  const bgContainerEl = headerEl.firstElementChild as HTMLElement;
-  const contentEl = bgContainerEl.firstElementChild as HTMLElement;
-  const mainContentChild = document.getElementById('main-content')
-    ?.firstElementChild as HTMLElement;
-  const headerHeight = headerEl.clientHeight;
-  const navHeight = 64;
-  const elements = [bgContainerEl, contentEl, mainContentChild];
-
-  if (page.scrollY >= headerHeight + navHeight) {
-    headerEl.style.height = '0px';
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  const header = el as HTMLElement;
+  const parent = header.parentElement;
+  if (!parent) {
     done();
     return;
   }
+  const height = header.clientHeight;
+  if (page.scrollY >= height) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    done();
+    return;
+  }
+  const banner = header.firstElementChild as HTMLElement;
+  const siblings = [...parent.children].filter((element) => element !== header) as HTMLElement[];
+  return animateHeader(
+    [
+      ...[header, ...siblings].map(
+        (element): Movement => [element, 'translateY(0)', `translateY(-${height}px)`],
+      ),
+      [banner, 'translateY(0)', `translateY(${height}px)`],
+    ],
+    done,
+  );
+};
 
-  bgContainerEl.style.transform = `translateY(-100%)`;
-  contentEl.style.transform = `translateY(100%)`;
-  mainContentChild.style.transform = `translateY(-${headerHeight}px)`;
-  elements.forEach((el) => {
-    el.style.transition = `transform ${pageTransitionDuration}ms`;
+const smallHeaderMovements = (header: HTMLElement, entering: boolean): Movement[] => {
+  const background = header.firstElementChild as HTMLElement | null;
+  const content = background?.firstElementChild as HTMLElement | null;
+  const main = document.getElementById('main-content')?.firstElementChild as HTMLElement | null;
+  if (!background || !content || !main) return [];
+  const movements: Movement[] = [
+    [background, 'translateY(-100%)', 'translateY(0)'],
+    [content, 'translateY(100%)', 'translateY(0)'],
+    [main, `translateY(-${background.clientHeight}px)`, 'translateY(0)'],
+  ];
+  return movements.map(([element, from, to]) =>
+    entering ? ([element, from, to] as Movement) : ([element, to, from] as Movement),
+  );
+};
+
+const onEnterSmallHeader = (el: Element) => {
+  let cleanup: (() => void) | undefined;
+  const frame = requestAnimationFrame(() => {
+    if (el.isConnected) cleanup = animateHeader(smallHeaderMovements(el as HTMLElement, true));
   });
+  return () => {
+    cancelAnimationFrame(frame);
+    cleanup?.();
+  };
+};
 
-  requestAnimationFrame(() => {
-    bgContainerEl.addEventListener(
-      'transitionend',
-      (e) => {
-        if (e.target !== e.currentTarget) return;
-
-        elements.forEach((el) => {
-          el.style.transition = '';
-          el.style.transform = '';
-        });
-        done();
-      },
-      { once: true },
-    );
-  });
+const onExitSmallHeader = (el: Element, done: () => void) => {
+  const header = el as HTMLElement;
+  if (page.scrollY >= header.clientHeight + 64) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    done();
+    return;
+  }
+  return animateHeader(smallHeaderMovements(header, false), done);
 };
 export default Header;

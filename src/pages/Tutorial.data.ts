@@ -1,17 +1,20 @@
 import type { RouteDataFactory } from '../utils/routeData';
-import { createMemo, isPending, type Component } from 'solid-js';
-import { getTutorial, getTutorialDirectory, type LessonLookup } from '@solid.js/docs';
-import { useAppState } from '../AppContext';
-
-type JsFiles = {
-  files: { name: string; type?: string; content: string }[];
-};
+import { createEffect, createMemo, isPending, type Component } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
+import {
+  canonicalTutorialId,
+  firstTutorialId,
+  getTutorial,
+  tutorialDirectory,
+  type LessonFiles,
+  type LessonLookup,
+} from '../content/tutorials';
 
 export interface TutorialRouteData {
   loading: boolean;
   markdown?: Component;
-  js?: JsFiles;
-  solvedJs?: JsFiles;
+  js?: LessonFiles;
+  solvedJs?: LessonFiles;
   tutorialDirectory?: Record<string, LessonLookup[]>;
   tutorialDirectoryEntry?: LessonLookup;
   nextUrl?: string;
@@ -23,37 +26,32 @@ export interface TutorialRouteData {
 }
 
 export const TutorialData: RouteDataFactory<TutorialRouteData> = (props) => {
-  const ctx = useAppState();
-  const paramList = () => ({ lang: ctx.locale, id: props.params.id || 'introduction_basics' });
-  const directory = createMemo(async () => {
-    const lang = ctx.locale;
-    const requestedLang = await getTutorialDirectory(lang);
-    if (requestedLang) return requestedLang;
-    return await getTutorialDirectory('en');
-  });
-  const data = createMemo(async () => {
-    const { lang, id } = paramList();
-    const requestedLang = await getTutorial(lang, id);
-    if (requestedLang?.lesson) return requestedLang;
-    return await getTutorial('en', id);
-  });
+  const navigate = useNavigate();
+  const id = () => canonicalTutorialId(props.params.id || firstTutorialId);
+  const directory = () => tutorialDirectory;
+  createEffect(
+    () => ({ original: props.params.id, id: id(), search: props.location.search }),
+    (value) => {
+      if (value.original !== value.id)
+        navigate(`/tutorial/${value.id}${value.search}`, { replace: true, scroll: false });
+    },
+  );
+  const data = createMemo(() => getTutorial(id()));
 
-  const currentIndex = (data: LessonLookup[]) =>
-    data.findIndex((el) => el.internalName === paramList().id);
+  const currentIndex = (data: LessonLookup[]) => data.findIndex((el) => el.internalName === id());
 
   return {
     get loading() {
       return isPending(data);
     },
     get markdown() {
-      const content: unknown = data()?.markdown;
-      return typeof content === 'function' ? (content as Component) : undefined;
+      return data().markdown;
     },
     get js() {
-      return data()?.lesson as JsFiles;
+      return data().lesson;
     },
     get solvedJs() {
-      return data()?.solved as JsFiles;
+      return data().solved;
     },
     get tutorialDirectory() {
       const data = directory();
@@ -72,7 +70,7 @@ export const TutorialData: RouteDataFactory<TutorialRouteData> = (props) => {
     get tutorialDirectoryEntry() {
       const data = directory();
       if (!data) return;
-      return data.find((el) => el.internalName === paramList().id);
+      return data.find((el) => el.internalName === id());
     },
     get nextUrl() {
       const data = directory();
@@ -99,7 +97,7 @@ export const TutorialData: RouteDataFactory<TutorialRouteData> = (props) => {
       if (index - 1 >= 0) return data[index - 1].lessonName.split('/').pop();
     },
     get id() {
-      return paramList().id;
+      return id();
     },
     get solved() {
       return !!props.location.search.includes('solved');

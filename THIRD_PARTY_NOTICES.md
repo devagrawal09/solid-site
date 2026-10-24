@@ -1,6 +1,10 @@
 Icon shapes in `src/components/icons/outline.tsx` and `solid.tsx` are adapted from
 solid-heroicons 2.0.3 by Alexandre Mouton-Brady and Heroicons by Tailwind Labs.
 
+Tutorial starter and solution files and supporting CSS in `src/content/tutorials`
+are adapted from `@solid.js/docs` 1.0.56, by Solid Team, under the MIT license.
+Copyright (c) Solid Team and the Solid documentation contributors.
+
 MIT License
 
 Copyright (c) Tailwind Labs, Inc.

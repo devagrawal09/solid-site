@@ -81,13 +81,14 @@ test('blog MDX renders native tags and embedded content', async ({ page }) => {
 
 test('tutorial content, solved files, and next lesson update together', async ({ page }) => {
   await page.goto('/tutorial/introduction_signals');
+  await expect(page).toHaveURL(/\/tutorial\/signals$/);
   await expect(page.locator('.prose')).toContainText('signal');
   await expect(page.getByRole('tab', { name: 'main.jsx' })).toBeVisible();
   await page.getByRole('link', { name: 'Solve', exact: true }).click();
   await expect(page).toHaveURL(/\?solved$/);
   await expect(page.getByRole('link', { name: 'Reset', exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Next step' }).click();
-  await expect(page).not.toHaveURL(/introduction_signals/);
+  await expect(page).toHaveURL(/\/tutorial\/derived-values$/);
   await expect(page.locator('.prose')).not.toBeEmpty();
 });
 

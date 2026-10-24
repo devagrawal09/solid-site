@@ -20,7 +20,7 @@ import Dismiss from '../components/Dismiss';
 import { useRouteReadyState } from '../utils/routeReadyState';
 import { reflow } from '../utils/reflow';
 import { useAppState } from '../AppContext';
-import type { LessonLookup } from '@solid.js/docs';
+import type { LessonLookup } from '../content/tutorials';
 import type { Tab } from 'solid-repl';
 const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
@@ -221,6 +221,12 @@ const Tutorial: Component<{ data: TutorialRouteData }> = (props) => {
               ref={markDownRef}
               class="p-10 prose dark:prose-invert flex-1 max-w-full overflow-auto"
             >
+              <Show when={context.locale !== 'en'}>
+                <p class="text-sm border-l-4 border-solid-light pl-4" role="note">
+                  These Solid 2 lessons are available in English while translations are being
+                  updated.
+                </p>
+              </Show>
               <Markdown />
             </div>
 
@@ -271,7 +277,6 @@ const Tutorial: Component<{ data: TutorialRouteData }> = (props) => {
               }
             >
               <Repl
-                version="1.9.17"
                 dark={context.isDark}
                 tabs={tabs()}
                 reset={() => {

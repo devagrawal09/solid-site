@@ -39,9 +39,11 @@ The website is built with [Solid](https://github.com/solidjs/solid). In order to
 
 The site runs on `solid-js`, `@solidjs/web`, and `@solidjs/signals` **2.0.0-rc.18** with `@solidjs/vite-plugin`. The router and Solid Primitives use their Solid 2 releases. Async page data uses `createMemo` and `Loading`; effects use separate tracking and apply functions, stores use draft setters, and links use the router's native anchor handling.
 
-`solid-repl` comes from [Solid Playground PR #201](https://github.com/solidjs/solid-playground/pull/201), pinned to [commit 176823c](https://github.com/devagrawal09/solid-playground/commit/176823cf1fa6214aad8cdbbe13bf6970bc5fb059) using pnpm's Git subdirectory dependency support. Its host, bundled default compiler, and homepage preview target rc.18. The first install builds the package from that commit; its build permission is restricted to the same commit in `pnpm-workspace.yaml`.
+`solid-repl` comes from [Solid Playground PR #201](https://github.com/solidjs/solid-playground/pull/201), pinned to [commit 2b803dd](https://github.com/devagrawal09/solid-playground/commit/2b803dd675d63ca2e4b07a57dfce43c0dcfd4e5c) using pnpm's Git subdirectory dependency support. Its host, bundled default compiler, and homepage preview target rc.18. The first install builds the package from that commit; its build permission is restricted to the same commit in `pnpm-workspace.yaml`.
 
-Published tutorials and examples still teach Solid 1, so those previews explicitly select `1.9.17`. Their compiler and runtime load into the REPL's workers and sandboxed preview. The site's application runtime stays on Solid 2. Preview execution needs access to the REPL's external CDNs.
+The tutorial is a local [42-lesson Solid 2 curriculum](src/content/tutorials/README.md), organized around sources and derivations, ownership, async reads, and mutations. All 15 examples and both exercise variants target rc.18. The 40 former tutorial URLs redirect into the new sequence and preserve query strings. English lessons are shown in every site locale with a notice until the new translations are available.
+
+Preview execution needs access to the REPL's external CDNs. The template-literal and hyperscript examples pin `@solidjs/html` and `@solidjs/h` at `2.0.0-rc.0`, their independently versioned Solid 2 renderer releases, with the web/core runtime on rc.18.
 
 The small `packages/docs-jsx` renderer handles the automatic JSX calls published by `@solid.js/docs` and generated from blog MDX. It replaces the documentation package's Solid 1 renderer. The site's menu, icon, transition, and social embed components also use Solid 2 directly.
 
@@ -49,7 +51,7 @@ The small `packages/docs-jsx` renderer handles the automatic JSX calls published
 
 Install Chromium once with `pnpm exec playwright install chromium`, then run `pnpm test:e2e`. To use an existing Chromium installation, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable.
 
-The tests build a local fixture from the installed Solid 2 runtime for preview execution and block third-party requests. Historical lesson source and navigation are tested without fetching the Solid 1 compiler from a CDN.
+The tests build fixtures from the installed Solid 2 development runtime and alternate renderers, and block third-party requests. They compile all 99 starter/solution/example file sets with the actual REPL worker and execute every solved lesson and example. Behavioral checks cover source changes, pending updates, retries, authoritative refresh, optimistic rollback, and todo operations in all three renderers.
 
 ## Additional information
 

@@ -9,6 +9,8 @@ export const test = base.extend({
       if (/^\[[A-Z][A-Z_]+\]/.test(message.text())) failures.push(message.text());
     });
     const runtime = await readFile('.cache/test-runtime/solid-v2.js', 'utf8');
+    const html = await readFile('.cache/test-runtime/html.js', 'utf8');
+    const h = await readFile('.cache/test-runtime/h.js', 'utf8');
     await page.route('https://**/*', async (route) => {
       const url = route.request().url();
       const headers = { 'Access-Control-Allow-Origin': '*' };
@@ -17,6 +19,16 @@ export const test = base.extend({
           contentType: 'application/javascript',
           body: 'globalThis.chobitsu = { setOnMessage() {}, sendRawMessage() {}, domain() { return null; } };',
         });
+      } else if (
+        url.startsWith('https://esm.sh/@solidjs/html@') ||
+        url === 'https://solid-site-test.invalid/html.js'
+      ) {
+        await route.fulfill({ contentType: 'application/javascript', headers, body: html });
+      } else if (
+        url.startsWith('https://esm.sh/@solidjs/h@') ||
+        url === 'https://solid-site-test.invalid/h.js'
+      ) {
+        await route.fulfill({ contentType: 'application/javascript', headers, body: h });
       } else if (url === 'https://solid-site-test.invalid/runtime.js') {
         await route.fulfill({ contentType: 'application/javascript', headers, body: runtime });
       } else if (url.startsWith('https://esm.sh/') && url.includes('2.0.0-rc.')) {

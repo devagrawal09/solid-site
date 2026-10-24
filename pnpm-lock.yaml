@@ -242,8 +242,8 @@ importers:
         specifier: 2.0.0-rc.18
         version: 2.0.0-rc.18
       solid-repl:
-        specifier: github:devagrawal09/solid-playground#176823cf1fa6214aad8cdbbe13bf6970bc5fb059&path:/packages/solid-repl
-        version: https://codeload.github.com/devagrawal09/solid-playground/tar.gz/176823cf1fa6214aad8cdbbe13bf6970bc5fb059#path:/packages/solid-repl(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))(solid-js@2.0.0-rc.18)
+        specifier: github:devagrawal09/solid-playground#2b803dd675d63ca2e4b07a57dfce43c0dcfd4e5c&path:/packages/solid-repl
+        version: https://codeload.github.com/devagrawal09/solid-playground/tar.gz/2b803dd675d63ca2e4b07a57dfce43c0dcfd4e5c#path:/packages/solid-repl(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))(solid-js@2.0.0-rc.18)
     devDependencies:
       '@aminya/minijson':
         specifier: ^1.1.0
@@ -254,6 +254,12 @@ importers:
       '@playwright/test':
         specifier: 1.64.1
         version: 1.64.1
+      '@solidjs/h':
+        specifier: 2.0.0-rc.0
+        version: 2.0.0-rc.0(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))
+      '@solidjs/html':
+        specifier: 2.0.0-rc.0
+        version: 2.0.0-rc.0(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))
       '@solidjs/vite-plugin':
         specifier: 3.0.0-next.51
         version: 3.0.0-next.51(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))(solid-js@2.0.0-rc.18)(supports-color@7.2.0)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.27.2)(jiti@1.21.0)(terser@5.51.2))
@@ -1140,6 +1146,16 @@ packages:
 
   '@solidjs/compiler@2.0.0-rc.18':
     resolution: {integrity: sha512-I9wQy6RQeOeDvbxDxco+hlDIK5UBxnVNdBEc2LnaC+bkSZwQX7S5ebAohPGhxfsEChLD++u9A8NBkFd9vSVM7A==}
+
+  '@solidjs/h@2.0.0-rc.0':
+    resolution: {integrity: sha512-APPxIiLi7E0JME1RDkwvkwhjgk5PB6wg81aZ8lqGxb+ljqLgTogCK30E9K3BHJTk/qnWGlvOHbVvmgGf3s2fZQ==}
+    peerDependencies:
+      '@solidjs/web': 2.0.0-rc.18
+
+  '@solidjs/html@2.0.0-rc.0':
+    resolution: {integrity: sha512-e3nP5bAdMcY7Zlrm9b1r6f4AMaK4LqzDncJ5yXBOG717ItJ3s1BI6QYDp0MdMk3QeU71NMMtW91x8YTDFeToOQ==}
+    peerDependencies:
+      '@solidjs/web': 2.0.0-rc.18
 
   '@solidjs/meta@1.0.0-next.2':
     resolution: {integrity: sha512-4aqPczFqDdep4JTAUXfh4nyfq7InbTgimd7NuN6ZWWE29UPv0uR5dyr53yFcf2YgVXjFdX+JGhXtsE0njGL+fA==}
@@ -3382,8 +3398,8 @@ packages:
     resolution: {integrity: sha512-g4KjUQUjfqvqHYnBddN5nVAF7DFcDjtuH+NeDu/26vx6SlSDiqBJS8jsNag6VpdKAnfK8oLfphogEhXtM4UOyw==}
     engines: {node: '>=22.12.0'}
 
-  solid-repl@https://codeload.github.com/devagrawal09/solid-playground/tar.gz/176823cf1fa6214aad8cdbbe13bf6970bc5fb059#path:/packages/solid-repl:
-    resolution: {gitHosted: true, integrity: sha512-aep8XgmeqFArsUQW7xm+WexU5tEzyKwNd0ILb68pZ6EJ767i7s9uN00y5vHQf6rsezfcSJgn/hWvU6EGJwMcEg==, path: /packages/solid-repl, tarball: https://codeload.github.com/devagrawal09/solid-playground/tar.gz/176823cf1fa6214aad8cdbbe13bf6970bc5fb059}
+  solid-repl@https://codeload.github.com/devagrawal09/solid-playground/tar.gz/2b803dd675d63ca2e4b07a57dfce43c0dcfd4e5c#path:/packages/solid-repl:
+    resolution: {gitHosted: true, integrity: sha512-HDItRYZv8oFi6IMu7FUKDXI3QiPdbWQeRDWeDgcj8LMCNZFFCAbIfDnnPJ9VGMB6nbwBeziEgb+6e86H2pVX3A==, path: /packages/solid-repl, tarball: https://codeload.github.com/devagrawal09/solid-playground/tar.gz/2b803dd675d63ca2e4b07a57dfce43c0dcfd4e5c}
     version: 0.26.0
     peerDependencies:
       '@solidjs/web': 2.0.0-rc.18
@@ -4548,6 +4564,14 @@ snapshots:
       '@solidjs/compiler-linux-x64-gnu': 2.0.0-rc.18
       '@solidjs/compiler-wasm32-wasi': 2.0.0-rc.18
       '@solidjs/compiler-win32-x64-msvc': 2.0.0-rc.18
+
+  '@solidjs/h@2.0.0-rc.0(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))':
+    dependencies:
+      '@solidjs/web': 2.0.0-rc.18(solid-js@2.0.0-rc.18)
+
+  '@solidjs/html@2.0.0-rc.0(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))':
+    dependencies:
+      '@solidjs/web': 2.0.0-rc.18(solid-js@2.0.0-rc.18)
 
   '@solidjs/meta@1.0.0-next.2(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))(solid-js@2.0.0-rc.18)':
     dependencies:
@@ -7300,7 +7324,7 @@ snapshots:
       seroval: 1.7.0
       seroval-plugins: 1.7.0(seroval@1.7.0)
 
-  solid-repl@https://codeload.github.com/devagrawal09/solid-playground/tar.gz/176823cf1fa6214aad8cdbbe13bf6970bc5fb059#path:/packages/solid-repl(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))(solid-js@2.0.0-rc.18):
+  solid-repl@https://codeload.github.com/devagrawal09/solid-playground/tar.gz/2b803dd675d63ca2e4b07a57dfce43c0dcfd4e5c#path:/packages/solid-repl(@solidjs/web@2.0.0-rc.18(solid-js@2.0.0-rc.18))(solid-js@2.0.0-rc.18):
     dependencies:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/commands': 6.11.1

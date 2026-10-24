@@ -74,7 +74,7 @@ export const routes: RouteDefinition[] = [
   },
   {
     path: '/tutorial',
-    component: redirectTo('/tutorial/introduction_basics'),
+    component: redirectTo('/tutorial/welcome'),
   },
 
   {

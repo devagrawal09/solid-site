@@ -101,7 +101,6 @@ const Examples: Component<{ data: ExamplesDataRoute }> = (props) => {
             >
               <Show when={tabs().length}>
                 <Repl
-                  version="1.9.17"
                   dark={context.isDark}
                   tabs={tabs()}
                   reset={() => {

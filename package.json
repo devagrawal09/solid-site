@@ -16,10 +16,10 @@
     "build:postoptimize": "node ./postoptimize.mjs",
     "build:sitemap": "jiti scripts/generateSitemap.js",
     "type:check": "tsc --noEmit",
-    "format": "prettier -w \"src/**/*.{js,ts,json,css,tsx,jsx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\"",
+    "format": "prettier -w \"src/**/*.{js,ts,json,css,tsx,jsx,md,mdx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\" \"public/examples/*.json\"",
     "deploy:dev": "wrangler publish --env development",
     "deploy:prod": "wrangler publish --env production",
-    "format:check": "prettier --check \"src/**/*.{js,ts,json,css,tsx,jsx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,ts,json,css,tsx,jsx,md,mdx}\" \"packages/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{js,ts,mjs,json,yaml,md}\" \"public/examples/*.json\"",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -46,7 +46,7 @@
     "@solid-primitives/transition-group": "2.0.0-next.4",
     "@solidjs/signals": "2.0.0-rc.18",
     "@solid-site/docs-jsx": "link:./packages/docs-jsx",
-    "solid-repl": "github:devagrawal09/solid-playground#176823cf1fa6214aad8cdbbe13bf6970bc5fb059&path:/packages/solid-repl"
+    "solid-repl": "github:devagrawal09/solid-playground#2b803dd675d63ca2e4b07a57dfce43c0dcfd4e5c&path:/packages/solid-repl"
   },
   "devDependencies": {
     "@aminya/minijson": "^1.1.0",
@@ -76,7 +76,9 @@
     "typescript": "^5.9.2",
     "vite": "8.3.5",
     "@solidjs/vite-plugin": "3.0.0-next.51",
-    "@playwright/test": "1.64.1"
+    "@playwright/test": "1.64.1",
+    "@solidjs/h": "2.0.0-rc.0",
+    "@solidjs/html": "2.0.0-rc.0"
   },
   "packageManager": "pnpm@12.11.2"
 }

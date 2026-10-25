@@ -81,23 +81,7 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
   intersectionObserver;
 
   const showLogo = createMemo(() => props.showLogo || !locked());
-  const navList = createMemo<LinkTypes[]>(() => {
-    const nav = (t('global.nav') as LinkTypes[]) || [];
-    const guides = ctx.guides;
-    return nav.map((item) => {
-      if (item.path !== '/guides' || !guides?.length) return item;
-      return {
-        ...item,
-        direction: ctx.dir,
-        links: guides.map(({ title, description, resource }) => ({
-          title,
-          description,
-          direction: ctx.dir,
-          path: `/guides/${resource}`,
-        })),
-      };
-    });
-  });
+  const navList = createMemo<LinkTypes[]>(() => (t('global.nav') as LinkTypes[]) || []);
 
   createEffect(
     () => [showLogo(), isRTL()] as const,

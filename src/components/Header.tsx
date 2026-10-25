@@ -21,13 +21,6 @@ const Header: ParentComponent<{ title?: string }> = () => {
   const context = useAppState();
   const { t } = context;
 
-  const guideName = createMemo(() => {
-    if (context.guides) {
-      const resource = location.pathname.slice('/guides/'.length);
-      return context.guides.find((metadata) => metadata.resource == resource)?.title;
-    }
-  });
-
   const Title: ParentComponent = (props) => (
     <span class="inline-block transition-all duration-200">{props.children}</span>
   );
@@ -81,7 +74,7 @@ const Header: ParentComponent<{ title?: string }> = () => {
                 <div class="space-y-2 md:flex md:space-y-0 md:space-x-2">
                   <div>
                     <a
-                      href="https://docs.solidjs.com/quick-start"
+                      href="/guides/getting-started"
                       class="bg-solid-medium flex justify-center items-center px-5 py-3 text-md rounded-lg hover:bg-solid-gray transition"
                     >
                       {t('home.get_started')}
@@ -131,8 +124,6 @@ const Header: ParentComponent<{ title?: string }> = () => {
                         <Title>
                           {/* {t('guides.title')} */}
                           Guides
-                          {guideName() && ':'}
-                          <span class="pl-2">{guideName()}</span>
                         </Title>
                       </Match>
                       <Match when={location.pathname.includes('/docs')}>

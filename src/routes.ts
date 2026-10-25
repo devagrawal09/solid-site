@@ -1,5 +1,5 @@
-import { lazy, type Component } from 'solid-js';
-import { useNavigate, type RouteDefinition } from '@solidjs/router';
+import { createEffect, lazy, type Component } from 'solid-js';
+import { useLocation, useNavigate, type RouteDefinition } from '@solidjs/router';
 import { pageWithData } from './utils/routeData';
 import { ContributorsData } from './pages/Contributors.data';
 import { BenchmarkData } from './pages/Benchmarks.data';
@@ -15,7 +15,12 @@ import { BlogArticleData } from './pages/BlogArticle.data';
 const redirectTo =
   (href: string): Component =>
   () => {
-    useNavigate()(href, { replace: true });
+    const navigate = useNavigate();
+    const location = useLocation();
+    createEffect(
+      () => `${location.search}${location.hash}`,
+      (suffix) => navigate(`${href}${suffix}`, { replace: true }),
+    );
     return null;
   };
 
@@ -29,7 +34,7 @@ export const routes: RouteDefinition[] = [
   },
   {
     path: '/guides/:id',
-    component: pageWithData(GuideData, () => import('./pages/Docs')),
+    component: pageWithData(GuideData, () => import('./pages/Guide')),
   },
   {
     path: '/hack',

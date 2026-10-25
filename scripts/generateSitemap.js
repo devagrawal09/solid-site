@@ -36,6 +36,11 @@ async function generateSitemap() {
     content = `${content}${formatPage(path, publishDate)}`;
   });
 
+  const guides = JSON.parse(await readFile('src/content/guides/directory.json', 'utf8'));
+  guides.forEach(({ id }) => {
+    content = `${content}${formatPage(`${site_url}/guides/${id}`, publishDate)}`;
+  });
+
   content = `${content}\n</urlset>\n`;
   await writeFile('public/sitemap.xml', content, { encoding: 'utf-8' });
 }

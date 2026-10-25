@@ -1,6 +1,5 @@
 import * as i18n from '@solid-primitives/i18n';
 import * as storage from '@solid-primitives/storage';
-import { ResourceMetadata, getGuideDirectory } from '@solid.js/docs';
 import * as router from '@solidjs/router';
 import {
   ParentComponent,
@@ -151,7 +150,6 @@ interface AppState {
   setLocale(value: Locale): void;
   t: i18n.Translator<Dictionary>;
   get dir(): 'ltr' | 'rtl';
-  get guides(): ResourceMetadata[] | undefined;
 }
 
 const AppContext = createContext<AppState>();
@@ -184,8 +182,6 @@ export const AppContextProvider: ParentComponent = (props) => {
   const locale = () => settings.locale;
 
   const dict = createMemo(() => (locale() === 'en' ? en_flat_dict : fetchDictionary(locale())));
-
-  const guidesList = createMemo(() => getGuideDirectory(locale()));
 
   createEffect(locale, (value) => {
     document.documentElement.lang = value;
@@ -220,9 +216,6 @@ export const AppContextProvider: ParentComponent = (props) => {
     t,
     get dir() {
       return t('global.dir') === 'ltr' ? 'ltr' : 'rtl';
-    },
-    get guides() {
-      return guidesList();
     },
   };
 

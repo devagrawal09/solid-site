@@ -5,7 +5,7 @@
   "nav": [
     { "title": "Inizia", "path": "/guides" },
     { "title": "Esercitazione", "path": "/tutorial" },
-    { "title": "API", "path": "/docs/latest/api" },
+    { "title": "API", "path": "/docs" },
     {
       "title": "SolidStart",
       "path": "https://start.solidjs.com",

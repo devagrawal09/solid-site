@@ -28,7 +28,7 @@ export default defineConfig({
     solid({ extensions: ['.md', '.mdx'] }),
   ],
   optimizeDeps: {
-    exclude: ['@solid.js/docs', 'solid-repl'],
+    exclude: ['solid-repl'],
   },
   resolve: {
     alias: { 'styled-system': resolve(replRoot, 'dist/styled-system') },

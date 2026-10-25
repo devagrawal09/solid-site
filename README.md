@@ -45,7 +45,9 @@ The tutorial is a local [42-lesson Solid 2 curriculum](src/content/tutorials/REA
 
 Preview execution needs access to the REPL's external CDNs. The template-literal and hyperscript examples pin `@solidjs/html` and `@solidjs/h` at `2.0.0-rc.0`, their independently versioned Solid 2 renderer releases, with the web/core runtime on rc.18.
 
-The small `packages/docs-jsx` renderer handles the automatic JSX calls published by `@solid.js/docs` and generated from blog MDX. It replaces the documentation package's Solid 1 renderer. The site's menu, icon, transition, and social embed components also use Solid 2 directly.
+The local learning hub at `/docs` connects the tutorial, examples, project setup, migration guide, and the dedicated Solid 2 reference. Documentation links in every site locale lead into that experience. Former guide topic URLs lead to the corresponding current learning material. The old `@solid.js/docs` distribution and its unused loaders have been removed.
+
+The small `packages/docs-jsx` renderer handles automatic JSX calls generated from local MDX for guides, tutorials, and historical blog articles. The site's menu, icon, transition, and social embed components also use Solid 2 directly.
 
 ### Browser tests
 
@@ -57,7 +59,7 @@ The tests build fixtures from the installed Solid 2 development runtime and alte
 
 #### How do the documentation files work?
 
-Tutorials are authored locally in `src/content/tutorials`: MDX explanations, JSON starter/solution files, and a canonical directory. Guide content continues to come from the [Solid Docs](https://github.com/solidjs/solid-docs) package.
+Tutorials are authored locally in `src/content/tutorials`: MDX explanations, JSON starter/solution files, and a canonical directory. Local guides live in `src/content/guides`, with their own directory. Both use English content with a visible notice for other locales until translations are ready. The API and application references link explicitly to [Solid 2 documentation](https://v2.solidjs.com); stable Solid 1 documentation is labeled separately.
 
 ## Credits
 

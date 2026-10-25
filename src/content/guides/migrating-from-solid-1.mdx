@@ -1,0 +1,254 @@
+Solid 2 keeps the fine-grained relationship between a source and the places that read it. It extends that graph to answers that arrive later, and makes the distinction between deriving an answer and performing a side effect explicit.
+
+Start by choosing one feature of your app: a form, a list, or a detail panel. Identify its **writable sources**, **derived answers**, **external work**, and **owner**. Port that feature through a complete read-and-write cycle before repeating the process elsewhere.
+
+These examples target **2.0.0-rc.18**, the release used by this site's tutorial. The [full upstream migration reference](https://v2.solidjs.com/migration/from-solid-1) covers additional APIs and library-author cases.
+
+<h2 id="packages">Align packages and JSX first</h2>
+
+Upgrade the core, renderer, and compiler integration together. The [project setup guide](/guides/getting-started) lists compatible package versions and the Vite configuration used here. Inspect each dependency's Solid peer range; a lockfile override cannot port a library's implementation.
+
+| Solid 1 import or configuration   | Solid 2 destination               |
+| --------------------------------- | --------------------------------- |
+| `solid-js/web`                    | `@solidjs/web`                    |
+| `solid-js/store`                  | `solid-js`                        |
+| `solid-js/html`                   | `@solidjs/html`                   |
+| `solid-js/h`                      | `@solidjs/h`                      |
+| `solid-js/universal`              | `@solidjs/universal`              |
+| Web `jsxImportSource: "solid-js"` | `jsxImportSource: "@solidjs/web"` |
+| Web `JSX` types from `solid-js`   | `JSX` types from `@solidjs/web`   |
+
+Renderer-neutral types such as `Component`, `Accessor`, and `Element` stay in `solid-js`. For example:
+
+```ts
+import type { Component, Element } from 'solid-js';
+import type { JSX } from '@solidjs/web';
+
+type PanelProps = {
+  children?: Element;
+  onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent>;
+};
+
+export type Panel = Component<PanelProps>;
+```
+
+If the app uses a router or full-stack framework, follow its migration alongside core. The dedicated references cover [Solid Router](https://v2.solidjs.com/migration/from-solid-router), [SolidStart](https://v2.solidjs.com/migration/from-solid-start), and [Solid Meta](https://v2.solidjs.com/migration/from-solid-meta).
+
+<h2 id="derived-state">Replace state synchronization with derivations</h2>
+
+When one value always follows another, express that dependency directly. A plain derived function works for a small calculation; a memo caches the answer and shares its work. An effect that copies the calculation into another signal introduces an extra write and an extra state to keep correct.
+
+```tsx
+import { createMemo, createSignal } from 'solid-js';
+
+function Price() {
+  const [quantity, setQuantity] = createSignal(1);
+  const total = createMemo(() => quantity() * 12);
+
+  return <button onClick={() => setQuantity((value) => value + 1)}>Total: ${total()}</button>;
+}
+```
+
+An editable default has a different requirement: it follows an upstream value, but the user can temporarily override it. Use the function form of `createSignal`:
+
+```tsx
+import { createSignal } from 'solid-js';
+
+function EditableName(props: { initialName: string }) {
+  const [name, setName] = createSignal(() => props.initialName);
+
+  return <input value={name()} onInput={(event) => setName(event.currentTarget.value)} />;
+}
+```
+
+Changing `initialName` recomputes the default. Typing updates the local override. Practice the distinction in [writable derived state](/tutorial/writable-state).
+
+<h2 id="batching">Account for the batch when reading after a write</h2>
+
+Ordinary writes now join a microtask batch. Within a handler, a getter still reads the committed value until the batch is applied. Use updater functions when a write depends on another queued write:
+
+```tsx
+import { createSignal, flush } from 'solid-js';
+
+function Counter() {
+  const [count, setCount] = createSignal(0);
+
+  function addTwo() {
+    setCount((value) => value + 1);
+    setCount((value) => value + 1);
+  }
+
+  function addAndReport() {
+    setCount((value) => value + 1);
+    flush();
+    console.log('Committed count:', count());
+  }
+
+  return (
+    <>
+      <button onClick={addTwo}>Add two: {count()}</button>
+      <button onClick={addAndReport}>Add and report</button>
+    </>
+  );
+}
+```
+
+Remove old `batch` wrappers. Most UI code can let the batch finish normally. Keep `flush` for a concrete need to observe the committed result immediately, such as an imperative integration or a synchronous test assertion. [Try batching](/tutorial/batching).
+
+<h2 id="effects">Separate tracked reads from external effects</h2>
+
+`createEffect` has a compute function and an apply function. Put dependencies in compute; return the values apply needs. Apply performs the external work without collecting additional dependencies.
+
+```tsx
+import { createEffect, createSignal } from 'solid-js';
+
+function PageTitle() {
+  const [title, setTitle] = createSignal('Hello');
+
+  createEffect(title, (value) => {
+    const previousTitle = document.title;
+    document.title = value;
+    return () => {
+      document.title = previousTitle;
+    };
+  });
+
+  return <input value={title()} onInput={(event) => setTitle(event.currentTarget.value)} />;
+}
+```
+
+The returned cleanup runs before the next apply and when the effect is disposed. If the old effect used `on(dependencies, callback)`, those dependencies now belong in compute. Use the third argument `{ defer: true }` to skip its initial apply.
+
+Apply runs whenever compute reruns, even if compute returns an equal value. If equality should suppress external work, read a memo in compute so the memo can make that comparison. [Practice split effects](/tutorial/effects).
+
+<h2 id="ownership">Keep work with its owner</h2>
+
+A component establishes owners and bindings once. Read changing values in JSX, a memo, or an effect's compute function. Destructuring a reactive prop or reading it into a plain local variable during setup keeps only that one reading.
+
+Writes belong in handlers, actions, and lifecycle work. A memo should calculate its answer; a component body should set up the graph. `untrack` opts out of dependency tracking for an intentional snapshot. It does not turn an owned setup scope into a place for writes.
+
+For setup after the owner settles, replace `onMount` with `onSettled` and return its teardown:
+
+```tsx
+import { createSignal, onSettled } from 'solid-js';
+
+function Timer() {
+  const [seconds, setSeconds] = createSignal(0);
+
+  onSettled(() => {
+    const timer = setInterval(() => setSeconds((value) => value + 1), 1000);
+    return () => clearInterval(timer);
+  });
+
+  return <p>Elapsed: {seconds()} seconds</p>;
+}
+```
+
+Ref callbacks are unowned. Capture the element there; put lifecycle registration in the component or the owned setup half of a directive factory. Call a directive factory inside the component or conditional branch whose lifetime it should share. The [ownership](/tutorial/ownership), [cleanup](/tutorial/cleanup), and [ref directive](/tutorial/directives) exercises make those lifetimes visible.
+
+<h2 id="stores">Write structured state through drafts</h2>
+
+Store setters receive a writable draft. Replace path arguments and `produce` wrappers with ordinary assignments and array operations inside that callback:
+
+```tsx
+import { createStore } from 'solid-js';
+
+function Todos() {
+  const [state, setState] = createStore({
+    todos: [{ id: 1, text: 'Port one feature', done: false }],
+  });
+
+  function completeAll() {
+    setState((draft) => {
+      for (const todo of draft.todos) todo.done = true;
+    });
+  }
+
+  return (
+    <button onClick={completeAll}>
+      Completed: {state.todos.filter((todo) => todo.done).length}
+    </button>
+  );
+}
+```
+
+Use `snapshot` when an external API needs plain data. When the store is an answer to another source, consider a derived store or projection instead of copying new results into it with an effect. [Practice stores](/tutorial/stores) and [bulk draft updates](/tutorial/draft-updates).
+
+<h2 id="async-reads">Treat an async read as a derived answer</h2>
+
+Move `createResource` fetchers into computations. A memo can return a promise and expose its eventual value through the normal getter. Read it under `Loading`; use `Errored` to place failure UI around the branch that owns the work.
+
+```tsx
+import { createMemo, Errored, isPending, Loading } from 'solid-js';
+
+type User = { name: string };
+type UserProps = { id: number; loadUser: (id: number) => Promise<User> };
+
+function UserDetails(props: UserProps) {
+  const user = createMemo(() => props.loadUser(props.id));
+
+  return <p aria-busy={isPending(user) ? 'true' : 'false'}>{user().name}</p>;
+}
+
+export function UserPanel(props: UserProps) {
+  return (
+    <Errored
+      fallback={(error, retry) => (
+        <div>
+          <p>{String(error())}</p>
+          <button onClick={retry}>Try again</button>
+        </div>
+      )}
+    >
+      <Loading fallback={<p>Loading user…</p>}>
+        <UserDetails id={props.id} loadUser={props.loadUser} />
+      </Loading>
+    </Errored>
+  );
+}
+```
+
+There are separate decisions here:
+
+- **First readiness:** `Loading` supplies a fallback while a branch cannot produce its first answer.
+- **A change to an existing answer:** useful content can stay visible while the new answer is in flight. `isPending` reports that change. Keep reads of unresolved data, including pending checks, under the boundary that handles them.
+- **Failure:** `Errored` supplies recovery UI. Its error argument is an accessor. This example puts the memo inside the child owned by the boundary, so retry can rebuild the failed work.
+
+An input-driven change and an explicit refresh have different meanings. `refresh(user)` asks the same question again and is quiet by itself. Use `affects(user)` when declaring work that will change that answer, then refresh after the write. A fetch starting is not sufficient reason to treat every UI region as pending.
+
+Start with [async memos](/tutorial/async-memos), then [loading](/tutorial/loading), [pending updates](/tutorial/pending), and [retry](/tutorial/async-errors). The [data-fetching migration reference](https://v2.solidjs.com/migration/data-fetching-from-solid-1) explains how to choose boundaries for a complete app.
+
+<h2 id="mutations">Coordinate mutations with authoritative reads</h2>
+
+For server writes, identify the authoritative query, the request that changes it, and the UI that can show an expected result immediately. A generator `action` coordinates the write and its async steps. Declare affected reads with `affects`, perform the request, and `yield refresh(query)` when the authoritative answer must settle before the action finishes.
+
+Optimistic signals and stores provide a temporary view inside that action. After the action settles, the authoritative state takes over; a failed write loses its optimistic override. Keep an error path for the rejected action at the event boundary. A “saving” indicator can be an optimistic flag written alongside the request; `isPending` describes an answer changing and is not a universal request counter.
+
+Port the normal write-and-refresh path first. Then add an optimistic view and test both success and failure. The [actions](/tutorial/actions) and [optimistic state](/tutorial/optimistic-state) lessons provide complete editable examples.
+
+<h2 id="rendering">Review props, lists, and DOM bindings</h2>
+
+These changes are small in syntax but can affect behavior:
+
+| Existing pattern                            | Migration and reason                                                                                                                        |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mergeProps(defaults, props)`               | `merge(defaults, props)`; an explicit `undefined` now overrides a default. Use `props.value ?? defaultValue` when that is the desired rule. |
+| Tuple returned by `splitProps`              | Use `omit(props, 'value')` to forward the remaining reactive props. It does not return the old tuple.                                       |
+| `Context.Provider`                          | The context itself is the provider: `<Context value={state}>`. Create reactive state under the provider's owner.                            |
+| `Index`                                     | Use `For` with `keyed={false}`. The item is an accessor and the position is a number.                                                       |
+| Default `For`                               | The item is a value and the position is an accessor. Choose keying based on which row's state should survive a move.                        |
+| `classList`                                 | Use the object or array forms of `class`.                                                                                                   |
+| `use:directive`                             | Capture the element through `ref`; keep setup and cleanup in an owned factory.                                                              |
+| `tabIndex`, `attr:`, `bool:`                | Use standard lowercase attributes and their normal presence or value rules.                                                                 |
+| `onClick={condition() ? first : second}`    | Put the choice inside a handler. The binding expression is evaluated once.                                                                  |
+| `Suspense`, `SuspenseList`, `ErrorBoundary` | Review boundary placement, then use `Loading`, `Reveal`, and `Errored`.                                                                     |
+
+For inputs, update the draft signal on `onInput`. If a handler rejects or transforms text while the signal's value stays equal, also write the accepted text back to `event.currentTarget.value`. See [input handling](https://v2.solidjs.com/concepts/components-and-jsx) and the [forms example](/examples/forms).
+
+<h2 id="verify">Verify the feature through its lifetime</h2>
+
+Run the app in development and address Solid's diagnostic messages. Check the feature's first render, a source change, removal and recreation of its owner, and any async failure or retry. For mutations, check the authoritative result as well as the immediate optimistic result.
+
+In synchronous reactive tests, apply queued writes with `flush` before asserting. For async work, await the relevant settled result or observable UI instead of an arbitrary delay. Keep test-created primitives under `createRoot` and dispose them afterward. The [Solid 2 testing guide](https://v2.solidjs.com/guides/testing) covers both component and reactive tests.
+
+Once that feature works, repeat the same source → answer → external work → owner review for the next part of the app. Use the [API reference](https://v2.solidjs.com/reference) for details beyond this guide.

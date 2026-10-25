@@ -1,8 +1,8 @@
 import { createComponent, type Component, type Element } from 'solid-js';
 import { dynamic, type JSX } from '@solidjs/web';
 
-// @solid.js/docs publishes MDX as automatic-runtime calls. Render that content
-// with Solid 2, without loading the Solid 1 renderer used by solid-jsx 0.9.
+// MDX compiles to automatic-runtime calls. Render them with Solid 2's owned
+// components and DOM factory, including native tags and reactive props.
 export const Fragment = (props: { children?: Element }) => props.children;
 
 export function jsx(

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "getting-started",
+    "title": "Start a Solid 2 project",
+    "description": "Set up a small Vite app with the same Solid release as this tutorial."
+  },
+  {
+    "id": "migrating-from-solid-1",
+    "title": "Move from Solid 1 to Solid 2",
+    "description": "Rethink derived state, ownership, async reads, and mutations before updating individual APIs."
+  }
+]

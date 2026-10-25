@@ -6,8 +6,7 @@
   "nav": [
     {
       "title": "Documentation",
-      "path": "https://docs.solidjs.com",
-      "external": true
+      "path": "/docs"
     },
     {
       "title": "Tutorial",

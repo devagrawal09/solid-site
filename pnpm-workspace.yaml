@@ -5,7 +5,6 @@ overrides:
   'solid-js': '2.0.0-rc.18'
   '@solidjs/web': '2.0.0-rc.18'
   '@solidjs/signals': '2.0.0-rc.18'
-  '@solid.js/docs>solid-jsx': 'link:./packages/docs-jsx'
 
 allowBuilds:
   esbuild@0.27.2: true

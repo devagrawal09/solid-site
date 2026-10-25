@@ -46,7 +46,9 @@ for validating of other dictionaries have same keys as en dictionary
 some might be missing, but the shape should be the same
 */
 type DeepPartial<T> =
-  T extends Record<string, unknown> ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
+  T extends Record<string, unknown>
+    ? { [K in keyof T]?: DeepPartial<T[K]> } & Record<string, unknown>
+    : T;
 
 const raw_dict_map: Record<Locale, () => Promise<{ dict: DeepPartial<RawDictionary> }>> = {
   en: () => Promise.resolve({ dict: en_dict }),

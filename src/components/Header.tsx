@@ -5,10 +5,11 @@ import Nav from './Nav';
 import { useAppState } from '../AppContext';
 import logo from '../assets/logo.svg';
 import wordmark from '../assets/wordmark.svg';
-import { chevronRight, play } from './icons/outline';
+import { chevronRight } from './icons/outline';
 import { Icon } from './icons/Icon';
 import PageLoadingBar from './LoadingBar/PageLoadingBar';
 import { routeReadyState, page } from '../utils/routeReadyState';
+import { solidVersion } from '../content/site';
 
 const Header: ParentComponent<{ title?: string }> = () => {
   const location = useLocation();
@@ -36,7 +37,8 @@ const Header: ParentComponent<{ title?: string }> = () => {
             <a
               target="_blank"
               href={t('home.ukraine.link')}
-              class="absolute w-full text-center text-[15px] p-3 bg-yellow-500 hover:bg-yellow-500/80 transition duration-200"
+              rel="noopener noreferrer"
+              class="block w-full text-center text-[15px] p-3 bg-yellow-500 hover:bg-yellow-500/80 transition duration-200"
             >
               <span class="text-whit">
                 <b>{t('home.ukraine.support')}</b>&nbsp;
@@ -44,14 +46,8 @@ const Header: ParentComponent<{ title?: string }> = () => {
               </span>{' '}
             </a>
             <div class="md:bg-hero dark:from-bg-gray-700 bg-no-repeat bg-right rtl:bg-left px-10">
-              <a target="_blank" href="https://www.youtube.com/watch?v=pFah4QqiUAg&t=9503s">
-                <img
-                  class="hidden md:block absolute md:top-20 lg:top-32 md:right-20 md:w-40 lg:w-72"
-                  src="/img/award-badge.svg"
-                />
-              </a>
-              <section class="px-3 lg:px-12 container space-y-10 lg:pb-20 lg:pt-52 py-10">
-                <div class="flex items-center mt-10 w-[calc(100%+40px)] space-y-4 lg:space-y-0 lg:space-x-4 lg:mt-0">
+              <section class="px-3 lg:px-12 container space-y-8 py-12 lg:py-20">
+                <div class="flex items-center gap-4">
                   <img
                     class="w-[6rem] h-30 lg:w-48"
                     style="filter: drop-shadow(-10px 4px 8px rgb(0 22 100 / 10%))"
@@ -68,35 +64,29 @@ const Header: ParentComponent<{ title?: string }> = () => {
                     height="70.7"
                   />
                 </div>
-                <h2 class="lg:font-semibold text-[26px] sm:text-3xl leading-8 lg:text-4xl lg:leading-10 xl:max-w-3xl">
-                  {t('home.hero')}
-                </h2>
-                <div class="space-y-2 md:flex md:space-y-0 md:space-x-2">
-                  <div>
+                <div dir="ltr" lang="en" class="max-w-3xl space-y-6">
+                  <p class="text-sm font-semibold tracking-wide">
+                    Solid {solidVersion} · {t('home.v2.release')}
+                  </p>
+                  <h1 class="text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
+                    {t('home.v2.hero')}
+                  </h1>
+                  <p class="max-w-2xl text-lg leading-relaxed text-white/90">
+                    {t('home.v2.intro')}
+                  </p>
+                  <div class="flex flex-wrap gap-3">
                     <a
-                      href="/guides/getting-started"
+                      href="/tutorial/welcome"
                       class="bg-solid-medium flex justify-center items-center px-5 py-3 text-md rounded-lg hover:bg-solid-gray transition"
                     >
-                      {t('home.get_started')}
+                      {t('home.v2.learn')}
                       <Icon stroke-width="3" class="w-5" path={chevronRight} />
                     </a>
-                  </div>
-                  <div class="flex flex-col space-y-1">
                     <a
-                      target="_blank"
-                      href="https://www.youtube.com/watch?v=hw3Bx5vxKl0"
-                      class="bg-solid-light flex items-center px-5 py-3 text-md rounded-lg hover:bg-solid-gray transition"
+                      href="/guides/migrating-from-solid-1"
+                      class="flex items-center rounded-lg border border-white/50 px-5 py-3 text-md transition hover:bg-white/10"
                     >
-                      <Icon stroke-width="2" class="w-6 mr-2" path={play} />
-                      {t('home.intro_video')}
-                    </a>
-                    <a
-                      target="_blank"
-                      href="https://www.youtube.com/watch?v=cELFZQAMdhQ"
-                      class="bg-solid-light bg-opacity-50 flex items-center px-5 py-3 text-md rounded-lg hover:bg-solid-gray transition"
-                    >
-                      <Icon stroke-width="2" class="w-6 mr-2" path={play} />
-                      {t('home.intro_video_advanced')}
+                      {t('home.v2.migrate')}
                     </a>
                   </div>
                 </div>
@@ -187,7 +177,7 @@ const onEnterBigHeader = (el: Element) => {
     const banner = header.firstElementChild as HTMLElement;
     const siblings = [...parent.children].filter((element) => element !== header) as HTMLElement[];
     const height = header.clientHeight;
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    if (!window.location.hash) window.scrollTo({ top: 0, behavior: 'instant' });
     cleanup = animateHeader([
       ...[header, ...siblings].map(
         (element): Movement => [element, `translateY(-${height}px)`, 'translateY(0)'],

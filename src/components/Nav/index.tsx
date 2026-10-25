@@ -17,6 +17,7 @@ import { LinkTypes, MenuLink } from './MenuLink';
 import { LanguageSelector } from './LanguageSelector';
 import { ModeToggle } from './ModeToggle';
 import { entries } from '@solid-primitives/utils';
+import { solidReferenceUrl } from '../../content/site';
 
 const langs: Record<Locale, string> = {
   en: 'English',
@@ -81,7 +82,21 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
   intersectionObserver;
 
   const showLogo = createMemo(() => props.showLogo || !locked());
-  const navList = createMemo<LinkTypes[]>(() => (t('global.nav') as LinkTypes[]) || []);
+  const navList = createMemo<LinkTypes[]>(() =>
+    ((t('global.nav') as LinkTypes[]) || []).map((item) => {
+      const path = item.path.replace(/\/$/, '');
+      if (path === 'https://start.solidjs.com')
+        return {
+          ...item,
+          title: t('global.solid2_nav.apps'),
+          path: `${solidReferenceUrl}/getting-started/project-shapes`,
+          external: true,
+        };
+      if (path === 'https://playground.solidjs.com')
+        return { ...item, path: '/#playground', external: false };
+      return item;
+    }),
+  );
 
   createEffect(
     () => [showLogo(), isRTL()] as const,

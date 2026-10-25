@@ -3,8 +3,7 @@ import directory from './directory.json';
 
 export const guideDirectory = directory;
 export type GuideMetadata = (typeof directory)[number];
-export const solidVersion = __SOLID_VERSION__;
-export const solidReferenceUrl = 'https://v2.solidjs.com';
+export { solidVersion, solidReferenceUrl } from '../site';
 
 const sources = import.meta.glob<{ default: Component }>('./*.mdx');
 

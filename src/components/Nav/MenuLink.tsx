@@ -69,8 +69,11 @@ export const MenuLink: ParentComponent<MenuLinkProps> = (props) => {
   });
 
   const onClick = () => {
-    if (window.location.pathname.startsWith(props.path)) {
-      window.scrollTo({ top: 0 });
+    const destination = new URL(props.path, window.location.href);
+    if (window.location.pathname === destination.pathname) {
+      if (destination.hash)
+        document.getElementById(destination.hash.slice(1))?.scrollIntoView({ block: 'start' });
+      else window.scrollTo({ top: 0 });
       return;
     }
     const pageEl = document.body;

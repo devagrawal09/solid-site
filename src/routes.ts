@@ -2,7 +2,6 @@ import { createEffect, lazy, type Component } from 'solid-js';
 import { useLocation, useNavigate, type RouteDefinition } from '@solidjs/router';
 import { pageWithData } from './utils/routeData';
 import { ContributorsData } from './pages/Contributors.data';
-import { BenchmarkData } from './pages/Benchmarks.data';
 import { GuideData } from './pages/Guide.data';
 import { TutorialData } from './pages/Tutorial.data';
 import { PackagesData } from './pages/Packages.data';
@@ -27,10 +26,7 @@ const redirectTo =
 export const routes: RouteDefinition[] = [
   {
     path: '/',
-    component: pageWithData(
-      () => ({ benchmarks: BenchmarkData() }),
-      () => import('./pages/Home'),
-    ),
+    component: lazy(() => import('./pages/Home')),
   },
   {
     path: '/guides/:id',

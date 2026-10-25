@@ -1,243 +1,199 @@
-import {
-  type Component,
-  createSignal,
-  lazy,
-  onSettled,
-  For,
-  Loading,
-  Show,
-  createMemo,
-} from 'solid-js';
+import { createSignal, lazy, onSettled, For, Loading, Show } from 'solid-js';
+import { Meta, Title } from '@solidjs/meta';
 import { createViewportObserver } from '@solid-primitives/intersection-observer';
 import iconBlocks1 from '../assets/icons/blocks1.svg';
 import iconBlocks2 from '../assets/icons/blocks2.svg';
-import flag from '../assets/icons/flag.svg';
 import sandbox from '../assets/icons/sandbox.svg';
 import performant from '../assets/icons/performant.svg';
 import powerful from '../assets/icons/powerful.svg';
 import pragmatic from '../assets/icons/pragmatic.svg';
 import productive from '../assets/icons/productive.svg';
-import { shoppingCart } from '../components/icons/outline';
-import { Icon } from '../components/icons/Icon';
 import Footer from '../components/Footer';
-import Benchmarks, { type GraphData } from '../components/Benchmarks';
 import { useRouteReadyState } from '../utils/routeReadyState';
 import { useAppState } from '../AppContext';
+import { solidReferenceUrl, solidVersion } from '../content/site';
+import counterSource from '../content/home/counter.tsx?raw';
 
 const Repl = lazy(() => import('../components/ReplTab'));
+const icons: Record<string, string> = { performant, powerful, pragmatic, productive };
+const demoTabs = [{ name: 'main.tsx', source: counterSource }];
 
-const strength_icons: { [key: string]: string } = {
-  performant,
-  powerful,
-  pragmatic,
-  productive,
-};
-
-const Home: Component<{ data: { benchmarks: GraphData[] } }> = (props) => {
-  const data = props.data;
-  const ctx = useAppState();
-  const { t } = ctx;
+export default function Home() {
+  const context = useAppState();
+  const { t } = context;
   const [loadRepl, setLoadRepl] = createSignal(false);
   const [observeInteraction] = createViewportObserver({ threshold: 0.4 });
-  let playgroundRef!: HTMLElement;
+  let playgroundRef!: HTMLDivElement;
 
   onSettled(() => {
     observeInteraction(playgroundRef, (entry) => entry.isIntersecting && setLoadRepl(true));
   });
-
   useRouteReadyState();
 
-  const chevron = createMemo(() => {
-    const direction = ctx.dir === 'rtl' ? 'chevron-left' : 'chevron-right';
-    return `chevron ${direction}`;
-  });
-
   return (
-    <div class="flex flex-col">
-      <div class="px-0 lg:px-12 container flex flex-col lg:space-y-10 md:pt-10 md:bg-blocks-one bg-contain bg-no-repeat bg-left-top md:dark:bg-blocks-one-dark">
-        <a
-          href="/store"
-          class="flex items-center space-x-3 justify-center text-center text-solid-medium dark:bg-solid-light/40 dark:text-white m-5 md:mx-0 hover:text-solid-dark transition duration-500 bg-slate-200/50 max-width-[300px] rounded-lg p-5 text-lg"
-        >
-          <Icon class="w-10" stroke-width={1.5} path={shoppingCart} />
-          <div innerHTML={t('home.news.content')} />
-        </a>
-        <section class="grid sm:grid-cols-2 lg:grid-cols-4 space-y-4 lg:space-y-0 lg:space-x-4 rounded-lg">
-          <For each={t('home.strengths')}>
-            {(strength: { icon: string; label: string; description: string }) => (
-              <div class="px-10 py-4 mt-4 md:py-10 border-b border-0 dark:border-solid-darkLighterBg md:odd:border-r lg:border-r lg:border-b-0 lg:ml-4 lg:mt-0 lg:last:border-none">
-                <img
-                  class="w-12 mb-5 dark:brightness-150"
-                  src={strength_icons[strength.icon]}
-                  alt={strength.label}
-                />
-                <h3 class="text-xl mb-2 font-semibold">{strength.label}</h3>
-                <p class="text-base">{strength.description}</p>
-              </div>
-            )}
-          </For>
-        </section>
-      </div>
-      <div class="lg:my-10 px-0 lg:px-12 container flex flex-col lg:space-y-10">
-        <section class="border-2 m-5 lg:m-0 border-gray-200 dark:border-solid-darkLighterBg rounded-lg defer">
-          <ul class="grid grid-cols-1 md:grid-cols-6 w-full">
-            <For each={t('home.facts')}>
-              {(fact: { label: string; detail: string; link?: string }) => {
-                const d = (
-                  <div class="flex md:inline-block">
-                    <strong class="font-semibold mr-1">{fact.label}</strong>
-                    <span class="flex items-center text-sm">{fact.detail}</span>
-                  </div>
-                );
-                return (
-                  <li
-                    class={[
-                      'transition border-gray-100 dark:border-solid-darkLighterBg border-r-0 md:border-r last:border-r-0',
-                      {
-                        'hover:bg-solid-dark': !!fact.link,
-                        'hover:text-white': !!fact.link,
-                      },
-                    ]}
-                  >
-                    {fact.link ? (
-                      <a
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        href={fact.link}
-                        class="flex p-3 justify-center border-b-2 border-gray-100 dark:border-solid-darkLighterBg md:border-none md:px-5 md:py-5 w-full"
-                      >
-                        {d}
-                      </a>
-                    ) : (
-                      <span class="flex p-3 justify-center border-b-2 border-gray-100 dark:border-solid-darkLighterBg md:border-none md:px-5 md:py-5 w-full">
-                        {d}
-                      </span>
-                    )}
-                  </li>
-                );
-              }}
-            </For>
-          </ul>
-        </section>
-        <section
-          class="grid grid-cols-1 gap-x-16 xl:grid-cols-[minmax(640px,_12fr)_minmax(0,_11fr)] py-20 px-8 lg:px-15"
-          ref={playgroundRef}
-        >
-          <div
-            dir="ltr"
-            style="height: 70vh; max-height: 600px; min-height: 475px;"
-            class="rounded-lg shadow-2xl order-2 xl:order-1 rtl:order-2 mt-10 lg:mt-0 flex flex-col outline-2 outline outline-gray-200 dark:outline-solid-darkLighterBg"
+    <>
+      <Title>SolidJS · Reactive UI, ready for async</Title>
+      <Meta name="description" content={t('home.v2.intro')} />
+      <div dir="ltr" lang="en" class="flex flex-col">
+        <div class="container px-5 pt-8 lg:px-12">
+          <Show when={context.locale !== 'en'}>
+            <p
+              role="note"
+              class="mb-6 rounded-lg border border-solid-light/30 bg-solid-light/10 p-4"
+            >
+              {t('home.v2.translation_notice')}
+            </p>
+          </Show>
+          <a
+            href="/docs"
+            class="block rounded-xl bg-solid-light/10 px-6 py-4 text-solid-medium transition hover:bg-solid-light/20 dark:text-solid-darkdefault"
           >
-            <Show when={loadRepl()}>
-              <Loading
-                fallback={
-                  <div class="flex h-full justify-center items-center">Starting playground...</div>
-                }
-              >
-                <Repl
-                  tabs={[
-                    {
-                      name: 'main.jsx',
-                      source: `import { onCleanup, createSignal } from "solid-js";
-import { render } from '@solidjs/web';
-
-const CountingComponent = () => {
-  const [count, setCount] = createSignal(0);
-  const interval = setInterval(
-    () => setCount(count => count + 1),
-    1000
-  );
-  onCleanup(() => clearInterval(interval));
-  return <div>Count value is {count()}</div>;
-};
-
-render(() => <CountingComponent />, document.getElementById("app"));`,
-                    },
-                  ]}
-                />
-              </Loading>
-            </Show>
-          </div>
-          <div class="flex flex-col justify-center order-1 xl:order-2 rtl:order-1">
-            <img class="w-20" src={iconBlocks1} alt="" />
-            <h3 class="text-3xl mt-6 font-semibold leading-10 text-solid">
-              {t('home.example.headline')}
-            </h3>
-            <For each={t('home.example.copy')}>
-              {(copy: string) => <p class="mt-9 leading-7">{copy}</p>}
-            </For>
-            <a
-              class={`button inline-block mt-8 text-solid-default dark:text-solid-darkdefault font-semibold hover:text-gray-500 dark:hover:text-gray-300 ${chevron()}`}
-              href={t('home.example.link')}
-            >
-              {t('home.example.link_label')}
-            </a>
-          </div>
-        </section>
-        <section class="dark:bg-solid-darkLighterBg bg-solid-lightgray py-16 grid grid-cols-1 lg:grid-cols-2 md:px-5 lg:px-16 defer rounded-br-6xl lg:bg-blocks-three bg-no-repeat bg-contain bg-right rtl:bg-left">
-          <div
-            class={[
-              'px-10 py-4 2xl:bg-opacity-0 bg-opacity-80 rounded-lg',
-              { 'xl:bg-opacity-0': ctx.dir === 'ltr' },
-            ]}
+            <span class="font-semibold">Solid {solidVersion}</span>
+            {' · '}
+            {t('home.v2.announcement')} →
+          </a>
+          <section
+            aria-label="Solid 2 principles"
+            class="grid gap-8 py-12 sm:grid-cols-2 lg:grid-cols-4"
           >
-            <img class="w-16" src={sandbox} alt="" />
-            <h2 class="text-3xl mt-8 mb-5 text-solid font-semibold">
-              {t('home.reactivity.headline')}
-            </h2>
-            <p class="text-2xl mt-2">{t('home.reactivity.subheadline')}</p>
-            <p class="mt-6 leading-7">{t('home.reactivity.copy')}</p>
-            <a
-              class={`button inline-block mt-8 text-solid-default dark:text-solid-darkdefault font-semibold hover:text-gray-500 dark:hover:text-gray-300 ${chevron()}`}
-              href={t('home.reactivity.link')}
-            >
-              {t('home.reactivity.link_label')}
-            </a>
-          </div>
-        </section>
-        <section class="py-20 px-10 lg:px-10 flex flex-col gap-x-32 space-y-10 lg:space-y-0 lg:flex-row">
-          <div class="flex flex-wrap items-center flex-1 rtl:ml-10">
-            <Benchmarks list={data.benchmarks} />
-          </div>
-          <div class="flex flex-col justify-around flex-1 bg-no-repeat">
-            <img class="w-20" src={iconBlocks2} alt="" />
-            <h2 class="mt-6 text-3xl font-semibold text-solid">
-              {t('home.performance.headline.0')}
-            </h2>
-            <h2 class="m3-6 text-2xl font-semibold text-solid">
-              {t('home.performance.headline.1')}
-            </h2>
-            <p class="leading-7 mt-9">{t('home.performance.copy')}</p>
-            <a
-              class={`button inline-block py-3 text-solid-default dark:text-solid-darkdefault font-semibold hover:text-gray-500 dark:hover:text-gray-300 ${chevron()}`}
-              href={t('home.performance.link')}
-            >
-              {t('home.performance.link_label')}
-            </a>
-          </div>
-        </section>
-        <section class="dark:bg-solid-darkLighterBg bg-solid-lightgray rounded-3xl grid md:grid-cols-2 py-20 px-10 lg:px-20 md:space-x-12">
-          <div class="gridflex flex-wrap content-center">
-            <h2 class="text-2xl font-semibold">
-              <img class="w-10 mb-5 block dark:invert" src={flag} alt="" />
-              {t('home.features.headline')}
-            </h2>
-            <p class="text-xl mt-4">{t('home.features.copy')}</p>
-          </div>
-          <ul class="flex flex-wrap">
-            <For each={t('home.features.list')}>
-              {(feature: string) => (
-                <li class="feature-block border-gray-300 dark:border-gray-700 w-full md:w-auto mr-3 mt-3 px-5 py-3">
-                  <span class="block text-sm">{feature}</span>
-                </li>
+            <For each={t('home.v2.principles')}>
+              {(principle: { icon: string; label: string; description: string }) => (
+                <div>
+                  <img
+                    class="mb-5 h-12 w-12 dark:brightness-150"
+                    src={icons[principle.icon]}
+                    alt=""
+                  />
+                  <h2 class="mb-3 text-xl font-semibold">{principle.label}</h2>
+                  <p class="leading-7 text-gray-600 dark:text-gray-300">{principle.description}</p>
+                </div>
               )}
             </For>
-          </ul>
-        </section>
+          </section>
+        </div>
+
+        <div class="container px-5 lg:px-12">
+          <section
+            aria-labelledby="playground-title"
+            class="grid scroll-mt-24 gap-10 py-12 xl:grid-cols-[minmax(0,12fr)_minmax(0,9fr)]"
+          >
+            <div
+              id="playground"
+              class="min-w-0 order-2 scroll-mt-24 xl:order-1"
+              ref={playgroundRef}
+            >
+              <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
+                {t('home.v2.example.hint')}
+              </p>
+              <div
+                class="flex h-[65vh] min-h-[475px] max-h-[600px] flex-col overflow-hidden rounded-xl shadow-xl outline outline-2 outline-gray-200 dark:outline-solid-darkLighterBg"
+                data-home-playground
+              >
+                <Show
+                  when={loadRepl()}
+                  fallback={<p class="m-auto p-6">{t('home.v2.example.loading')}</p>}
+                >
+                  <Loading fallback={<p class="m-auto p-6">{t('home.v2.example.loading')}</p>}>
+                    <Repl tabs={demoTabs} />
+                  </Loading>
+                </Show>
+              </div>
+            </div>
+            <div class="order-1 flex flex-col justify-center xl:order-2">
+              <img class="w-20" src={iconBlocks1} alt="" />
+              <h2 id="playground-title" class="mt-6 text-3xl font-semibold leading-tight">
+                {t('home.v2.example.headline')}
+              </h2>
+              <For each={t('home.v2.example.copy')}>
+                {(copy: string) => <p class="mt-6 leading-7">{copy}</p>}
+              </For>
+              <a
+                href="/tutorial/signals"
+                class="mt-8 font-semibold text-solid-default underline dark:text-solid-darkdefault"
+              >
+                {t('home.v2.example.link_label')} →
+              </a>
+            </div>
+          </section>
+
+          <section
+            aria-labelledby="ownership-title"
+            class="my-12 grid gap-8 rounded-3xl bg-solid-lightgray px-6 py-12 dark:bg-solid-darkLighterBg md:grid-cols-2 lg:px-12"
+          >
+            <div>
+              <img class="w-16" src={sandbox} alt="" />
+              <h2 id="ownership-title" class="mt-6 text-3xl font-semibold leading-tight">
+                {t('home.v2.ownership.headline')}
+              </h2>
+            </div>
+            <div class="flex flex-col justify-center">
+              <p class="leading-7">{t('home.v2.ownership.copy')}</p>
+              <a
+                href="/tutorial/ownership"
+                class="mt-6 font-semibold text-solid-default underline dark:text-solid-darkdefault"
+              >
+                {t('home.v2.ownership.link_label')} →
+              </a>
+            </div>
+          </section>
+
+          <section aria-labelledby="async-title" class="py-12">
+            <div class="max-w-3xl">
+              <img class="w-20" src={iconBlocks2} alt="" />
+              <h2 id="async-title" class="mt-6 text-3xl font-semibold leading-tight">
+                {t('home.v2.async.headline')}
+              </h2>
+              <p class="mt-6 leading-7">{t('home.v2.async.copy')}</p>
+            </div>
+            <ol class="mt-8 grid gap-5 md:grid-cols-3">
+              <For each={t('home.v2.async.steps')}>
+                {(step: { title: string; copy: string; link: string; label: string }) => (
+                  <li class="flex flex-col rounded-xl border border-gray-200 p-6 dark:border-solid-light/30">
+                    <h3 class="text-xl font-semibold">{step.title}</h3>
+                    <p class="mt-4 flex-1 leading-7">{step.copy}</p>
+                    <a
+                      href={step.link}
+                      class="mt-6 font-semibold text-solid-default underline dark:text-solid-darkdefault"
+                    >
+                      {step.label} →
+                    </a>
+                  </li>
+                )}
+              </For>
+            </ol>
+          </section>
+
+          <section
+            aria-labelledby="features-title"
+            class="my-12 rounded-3xl bg-solid-lightgray px-6 py-12 dark:bg-solid-darkLighterBg lg:px-12"
+          >
+            <h2 id="features-title" class="text-3xl font-semibold">
+              {t('home.v2.features.headline')}
+            </h2>
+            <p class="mt-5 max-w-3xl leading-7">{t('home.v2.features.copy')}</p>
+            <ul class="mt-6 flex flex-wrap gap-3">
+              <For each={t('home.v2.features.list')}>
+                {(feature: string) => (
+                  <li class="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-600">
+                    {feature}
+                  </li>
+                )}
+              </For>
+            </ul>
+            <div class="mt-8 flex flex-wrap gap-6 font-semibold text-solid-default underline dark:text-solid-darkdefault">
+              <a href="/guides/getting-started">{t('home.v2.features.setup')} →</a>
+              <a href={`${solidReferenceUrl}/reference`}>{t('home.v2.features.reference')} ↗</a>
+            </div>
+            <p class="mt-8 text-sm leading-6 text-gray-600 dark:text-gray-300">
+              {t('home.v2.performance.copy')}{' '}
+              <a href="https://github.com/krausest/js-framework-benchmark" class="underline">
+                {t('home.v2.performance.link_label')} ↗
+              </a>
+            </p>
+          </section>
+        </div>
       </div>
       <Footer />
-    </div>
+    </>
   );
-};
-
-export default Home;
+}

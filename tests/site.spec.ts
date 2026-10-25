@@ -2,7 +2,9 @@ import { test, expect } from './fixtures';
 
 test('native links navigate without reloading, redirect, and restore history', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('Familiar and modern', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Reactive UI, ready for async.', exact: true }),
+  ).toBeVisible();
   await page.evaluate(() => {
     Object.assign(window, { navigationMarker: true });
   });
@@ -94,13 +96,19 @@ test('tutorial content, solved files, and next lesson update together', async ({
 
 test('Solid 2 playground runs, updates reactively, formats, and resets', async ({ page }) => {
   await page.goto('/');
-  await page.getByText('Familiar and modern', { exact: true }).scrollIntoViewIfNeeded();
+  await page
+    .getByRole('heading', { name: 'Change the state. Follow the result.', exact: true })
+    .scrollIntoViewIfNeeded();
   const repl = page.locator('[data-repl]');
-  await expect(repl.getByRole('tab', { name: 'main.jsx' })).toBeVisible();
+  await expect(repl.getByRole('tab', { name: 'main.tsx' })).toBeVisible();
   const preview = page.frameLocator('iframe[title="Solid REPL"]');
-  await expect(preview.locator('#app')).toContainText('Count value is');
-  const initial = await preview.locator('#app').innerText();
-  await expect(preview.locator('#app')).not.toHaveText(initial);
+  await expect(preview.locator('#app')).toContainText('Doubled: 0');
+  await repl.getByRole('tab', { name: 'Preview', exact: true }).click();
+  await preview.getByRole('button', { name: 'Count: 0', exact: true }).click();
+  await expect(preview.getByRole('button', { name: 'Count: 1', exact: true })).toBeVisible();
+  await expect(preview.locator('#app')).toContainText('Doubled: 2');
+  await preview.getByRole('button', { name: 'Reset count', exact: true }).click();
+  await expect(preview.locator('#app')).toContainText('Doubled: 0');
   const input = repl.locator('.cm-content').filter({ visible: true }).first();
   await input.focus();
   await page.keyboard.press('ControlOrMeta+A');
@@ -116,7 +124,8 @@ test('Solid 2 playground runs, updates reactively, formats, and resets', async (
   await expect(input).toContainText('function App()');
   page.once('dialog', (dialog) => dialog.accept());
   await repl.getByRole('button', { name: 'Reset Editor', exact: true }).click();
-  await expect(preview.locator('#app')).toContainText('Count value is');
+  await expect(preview.getByRole('button', { name: 'Count: 0', exact: true })).toBeVisible();
+  await expect(preview.locator('#app')).toContainText('Doubled: 0');
 });
 
 test('published examples follow rapid navigation and load the matching source', async ({

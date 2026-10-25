@@ -15,6 +15,7 @@ const ReplTab: Component<{ tabs: Tab[] }> = (props) => {
           setTabs(props.tabs);
         }}
         hideDevtools
+        vertical
         dark={context.isDark}
         tabs={tabs()}
         setTabs={setTabs}

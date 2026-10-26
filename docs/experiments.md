@@ -8,7 +8,7 @@
 - A visible hero heading (at least 50%, while the document is visible) records one exposure. Browsers that never see it are outside the cohort. A blocked cookie cannot participate.
 - Primary outcome: `learning_started`, meaning a tutorial code edit, Solve click, or Next step click. This is an engagement proxy, not proof that someone learned Solid or adopted it in production.
 - Secondary outcomes: hero CTA click, tutorial opened, setup opened, docs opened, and homepage playground edited. Each outcome counts once per exposed browser. The denominator includes non-converters.
-- Outcomes are attributed for seven days after the first exposure. Repeat visits cannot extend that deadline. Enrollment closes fourteen days after the first real exposure; enrolled browsers can finish their outcome window afterward.
+- Outcomes are attributed for seven days after the first exposure. Repeat visits cannot extend that deadline. Enrollment closes fourteen days after the first real exposure; enrolled browsers can finish their outcome window afterward. Non-personal run metadata preserves this deadline even after visitors opt out or old records are removed.
 - Preview URLs (`/?home_variant=control`, `speed`, or `experience`), signed-in owner visits, recognized bots, DNT/GPC, and opt-outs are excluded. Previewing does not replace an existing live assignment.
 
 ## Results and decisions

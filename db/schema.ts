@@ -1,5 +1,10 @@
 import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
+export const runs = sqliteTable('experiment_runs', {
+  experiment: text('experiment').primaryKey(),
+  startedAt: integer('started_at').notNull(),
+});
+
 export const exposures = sqliteTable(
   'experiment_exposures',
   {

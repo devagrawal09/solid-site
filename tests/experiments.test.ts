@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import worker from '../server/index';
 import { assignmentCookie, encodeVisitor, newVisitor, optOutCookie } from '../server/assignment';
 import { experimentId, rateInterval } from '../src/experiments/config';
@@ -11,7 +11,10 @@ import type { Database, Env, Statement } from '../server/types';
 const origin = 'https://solid.test';
 function setup() {
   const sqlite = new DatabaseSync(':memory:');
-  sqlite.exec(readFileSync('drizzle/0000_yummy_rick_jones.sql', 'utf8'));
+  for (const file of readdirSync('drizzle')
+    .filter((file) => file.endsWith('.sql'))
+    .sort())
+    sqlite.exec(readFileSync(`drizzle/${file}`, 'utf8'));
   const prepare = (query: string, values: (string | number | null)[] = []): Statement => ({
     bind: (...bound) => prepare(query, bound),
     run: async () => sqlite.prepare(query).run(...values),
@@ -281,6 +284,7 @@ test('enrollment closes after fourteen days while the final outcomes remain attr
   sqlite
     .prepare('UPDATE experiment_exposures SET exposed_at = ?')
     .run(Date.now() - 15 * 86_400_000);
+  sqlite.prepare('UPDATE experiment_runs SET started_at = ?').run(Date.now() - 15 * 86_400_000);
   const late = await visitorCookie('speed');
   await ingest(late.cookie, ['exposure', 'learning_started']);
   assert.equal(
@@ -349,4 +353,33 @@ test('bootstrap failures and malformed assignments render control without record
       variant: 'control',
       mode: 'disabled',
     });
+});
+
+test('privacy deletion and retention cleanup never restart a closed experiment', async () => {
+  for (const optOut of [true, false]) {
+    const { call, ingest, visitorCookie, sqlite } = setup();
+    const { cookie } = await visitorCookie();
+    await ingest(cookie, ['exposure']);
+    const started = Date.now() - 91 * 86_400_000;
+    sqlite.prepare('UPDATE experiment_runs SET started_at = ?').run(started);
+    sqlite.prepare('UPDATE experiment_exposures SET exposed_at = ?').run(started);
+    if (optOut)
+      await call('/api/experiments/opt-out', {
+        method: 'POST',
+        headers: { Origin: origin, Cookie: cookie },
+      });
+    else
+      await call('/api/experiments/results', {
+        headers: { 'oai-authenticated-user-email': 'owner@example.test' },
+      });
+    assert.equal(
+      sqlite.prepare('SELECT COUNT(*) AS count FROM experiment_exposures').get()!.count,
+      0,
+    );
+    assert.equal(
+      sqlite.prepare('SELECT started_at FROM experiment_runs').get()!.started_at,
+      started,
+    );
+    assert.equal(assignmentFrom(await (await call('/')).text()).mode, 'disabled');
+  }
 });

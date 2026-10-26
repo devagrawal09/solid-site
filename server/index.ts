@@ -42,7 +42,7 @@ async function assignment(
   const previous = await readVisitor(request, env);
   if (!previous) {
     const started = await env.DB.prepare(
-      'SELECT MIN(exposed_at) AS started FROM experiment_exposures WHERE experiment = ?',
+      'SELECT started_at AS started FROM experiment_runs WHERE experiment = ?',
     )
       .bind(experimentId)
       .first<{ started: number | null }>();
@@ -109,15 +109,18 @@ async function collect(request: Request, env: Env): Promise<Response> {
   if (payload.events.includes('exposure')) {
     statements.push(
       env.DB.prepare(
+        'INSERT OR IGNORE INTO experiment_runs (experiment, started_at) VALUES (?, ?)',
+      ).bind(experimentId, now),
+    );
+    statements.push(
+      env.DB.prepare(
         `INSERT OR IGNORE INTO experiment_exposures (experiment, visitor, variant, exposed_at)
-      SELECT ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM experiment_exposures WHERE experiment = ?)
-      OR ? < (SELECT MIN(exposed_at) + ? FROM experiment_exposures WHERE experiment = ?)`,
+      SELECT ?, ?, ?, ? WHERE ? < (SELECT started_at + ? FROM experiment_runs WHERE experiment = ?)`,
       ).bind(
         experimentId,
         visitor.id,
         visitor.variant,
         now,
-        experimentId,
         now,
         enrollmentDays * day,
         experimentId,
@@ -179,7 +182,16 @@ async function report(request: Request, env: Env): Promise<Response> {
     ...Object.fromEntries(goals.filter((goal) => goal !== 'exposure').map((goal) => [goal, 0])),
     ...rows.results.find((row) => row.variant === variant),
   }));
-  return privateResponse({ experiment: experimentId, attributionDays, generatedAt: now, arms });
+  const run = await env.DB.prepare('SELECT started_at FROM experiment_runs WHERE experiment = ?')
+    .bind(experimentId)
+    .first<{ started_at: number }>();
+  return privateResponse({
+    experiment: experimentId,
+    attributionDays,
+    generatedAt: now,
+    startedAt: run?.started_at ?? null,
+    arms,
+  });
 }
 async function optOut(request: Request, env: Env): Promise<Response> {
   if (!sameOrigin(request)) return privateResponse({ error: 'Same-origin requests only.' }, 403);

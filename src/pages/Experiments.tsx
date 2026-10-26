@@ -23,7 +23,7 @@ interface Arm {
   matured_conversions: number;
   first_exposure?: number;
 }
-type Report = { arms: Arm[]; generatedAt: number };
+type Report = { arms: Arm[]; generatedAt: number; startedAt: number | null };
 const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
 // Planning assumption: 10% -> 13%, 80% power, two two-sided comparisons, family-wise alpha 5%.
 const plannedSample = Math.ceil(
@@ -33,7 +33,7 @@ const plannedSample = Math.ceil(
 );
 
 function Results(props: { report: Report }) {
-  const first = () => Math.min(...props.report.arms.map((arm) => arm.first_exposure ?? Infinity));
+  const first = () => props.report.startedAt ?? Infinity;
   const enoughTime = () =>
     Number.isFinite(first()) && Date.now() - first() >= (14 + attributionDays) * 86_400_000;
   const ready = () =>

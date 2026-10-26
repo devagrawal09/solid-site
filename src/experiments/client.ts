@@ -1,4 +1,5 @@
 import { createSignal, onSettled } from 'solid-js';
+import { loadAssignment } from './bootstrap';
 import { experimentId, isGoal, isVariant, variants, type Assignment, type Goal } from './config';
 
 declare global {
@@ -15,6 +16,11 @@ const [assignment, setAssignment] = createSignal(initial);
 export const homeMessage = () => variants[assignment().variant];
 export const previewMode = () => assignment().mode === 'preview';
 let exposed = initial.eligible === true;
+export async function initializeExperiment(): Promise<void> {
+  const value = await loadAssignment(window.__HOME_EXPERIMENT__, window.location.search);
+  setAssignment(value);
+  exposed = value.eligible === true;
+}
 const recorded = new Set<Goal>();
 export function trackGoal(goal: Goal): void {
   if (

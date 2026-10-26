@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import worker from '../server/index';
 import { assignmentCookie, encodeVisitor, newVisitor, optOutCookie } from '../server/assignment';
 import { experimentId, rateInterval } from '../src/experiments/config';
+import { loadAssignment } from '../src/experiments/bootstrap';
 import type { Database, Env, Statement } from '../server/types';
 
 const origin = 'https://solid.test';
@@ -312,4 +313,40 @@ test('storage failures preserve the homepage and report ingestion failure honest
   assert.equal(home.status, 200);
   assert.equal(assignmentFrom(await home.text()).mode, 'disabled');
   assert.equal((await ingest(cookie, ['exposure'])).status, 503);
+});
+
+test('assets-first hosts resolve a stable assignment before rendering and preserve preview exclusions', async () => {
+  let requested = '';
+  const fetcher: typeof fetch = async (request) => {
+    requested = String(request);
+    return Response.json({ experiment: experimentId, variant: 'speed', mode: 'preview' });
+  };
+  const value = await loadAssignment(undefined, '?home_variant=speed', fetcher);
+  assert.equal(requested, '/api/experiments/assignment?home_variant=speed');
+  assert.equal(value.variant, 'speed');
+  assert.equal(value.mode, 'preview');
+  let called = false;
+  const injected = await loadAssignment(value, '', async () => {
+    called = true;
+    throw new Error('Should not fetch');
+  });
+  assert.deepEqual(injected, value);
+  assert.equal(called, false);
+});
+
+test('bootstrap failures and malformed assignments render control without recording data', async () => {
+  const failures: (typeof fetch)[] = [
+    async () => {
+      throw new Error('Timed out');
+    },
+    async () => new Response('Service unavailable', { status: 503 }),
+    async () => Response.json({ experiment: experimentId, variant: 'toString', mode: 'live' }),
+    async () => Response.json({ experiment: 'wrong', variant: 'speed', mode: 'live' }),
+  ];
+  for (const fetcher of failures)
+    assert.deepEqual(await loadAssignment(undefined, '', fetcher), {
+      experiment: experimentId,
+      variant: 'control',
+      mode: 'disabled',
+    });
 });

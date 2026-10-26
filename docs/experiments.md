@@ -4,7 +4,7 @@
 
 ## Assignment and measurement
 
-- The Worker allocates browsers equally using cryptographic randomness and signs the assignment with HMAC. Its first-party, Secure, HttpOnly cookie lasts 90 days. Assignment happens before application JavaScript renders, avoiding a control-to-variant flash.
+- The Worker allocates browsers equally using cryptographic randomness and signs the assignment with HMAC. Its first-party, Secure, HttpOnly cookie lasts 90 days. Assignment happens before application JavaScript renders, avoiding a control-to-variant flash. If the host serves HTML assets before the Worker, a bounded bootstrap API request resolves the assignment before rendering; after 1.5 seconds or a service failure, the control page renders without collecting data.
 - A visible hero heading (at least 50%, while the document is visible) records one exposure. Browsers that never see it are outside the cohort. A blocked cookie cannot participate.
 - Primary outcome: `learning_started`, meaning a tutorial code edit, Solve click, or Next step click. This is an engagement proxy, not proof that someone learned Solid or adopted it in production.
 - Secondary outcomes: hero CTA click, tutorial opened, setup opened, docs opened, and homepage playground edited. Each outcome counts once per exposed browser. The denominator includes non-converters.

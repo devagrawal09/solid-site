@@ -47,13 +47,18 @@ function setup() {
                 'Cache-Control': 'public, max-age=3600',
               },
             })
-          : new Response('<!doctype html><html><head></head><body>Solid</body></html>', {
-              headers: { 'Content-Type': 'text/html' },
-            }),
+          : ['/', '/index.html'].includes(new URL(request.url).pathname)
+            ? new Response('<!doctype html><html><head></head><body>Solid</body></html>', {
+                headers: { 'Content-Type': 'text/html' },
+              })
+            : new Response('Not found', { status: 404 }),
     },
   };
-  const call = (path: string, options: RequestInit = {}) =>
-    worker.fetch(new Request(origin + path, options), env);
+  const call = (path: string, options: RequestInit = {}) => {
+    const headers = new Headers(options.headers);
+    if (!headers.has('Accept')) headers.set('Accept', 'text/html');
+    return worker.fetch(new Request(origin + path, { ...options, headers }), env);
+  };
   const ingest = (cookieValue: string, events: string[], headers = {}) =>
     call('/api/experiments/events', {
       method: 'POST',
@@ -382,4 +387,15 @@ test('privacy deletion and retention cleanup never restart a closed experiment',
     );
     assert.equal(assignmentFrom(await (await call('/')).text()).mode, 'disabled');
   }
+});
+
+test('fresh navigation to app routes uses the SPA while missing assets retain their 404', async () => {
+  const { call } = setup();
+  for (const path of ['/experiments', '/docs', '/tutorial/signals', '/privacy']) {
+    const response = await call(path);
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /window\.__HOME_EXPERIMENT__/);
+  }
+  assert.equal((await call('/assets/missing.css')).status, 404);
+  assert.equal((await call('/api/missing')).status, 404);
 });

@@ -243,7 +243,16 @@ export default {
     }
     if (!['GET', 'HEAD'].includes(request.method))
       return new Response('Method not allowed', { status: 405 });
-    const asset = await env.ASSETS.fetch(request);
+    let asset = await env.ASSETS.fetch(request);
+    // The host may not forward Wrangler's SPA asset routing configuration.
+    if (
+      asset.status === 404 &&
+      request.headers.get('Accept')?.includes('text/html') &&
+      !url.pathname.startsWith('/assets/') &&
+      !url.pathname.startsWith('/api/')
+    ) {
+      asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url), request));
+    }
     if (
       !asset.headers.get('Content-Type')?.includes('text/html') ||
       request.method === 'HEAD' ||

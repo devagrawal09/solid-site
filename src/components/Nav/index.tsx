@@ -1,19 +1,10 @@
-import {
-  ParentComponent,
-  For,
-  createMemo,
-  createSignal,
-  Show,
-  on,
-  createComputed,
-  onCleanup,
-  createEffect,
-} from 'solid-js';
+import { ParentComponent, For, createMemo, createSignal, Show, createEffect } from 'solid-js';
 import { computePosition, autoUpdate, shift, size, flip, offset } from '@floating-ui/dom';
-import { A } from '@solidjs/router';
+import { useIsRouting } from '@solidjs/router';
+
 import { makeIntersectionObserver } from '@solid-primitives/intersection-observer';
 import { debounce } from '@solid-primitives/scheduled';
-import Dismiss from 'solid-dismiss';
+import Dismiss from '../Dismiss';
 import logo from '../../assets/logo.svg';
 import ukraine from '../../assets/for-ukraine.png';
 import ScrollShadow from '../ScrollShadow/ScrollShadow';
@@ -26,6 +17,7 @@ import { LinkTypes, MenuLink } from './MenuLink';
 import { LanguageSelector } from './LanguageSelector';
 import { ModeToggle } from './ModeToggle';
 import { entries } from '@solid-primitives/utils';
+import { solidReferenceUrl } from '../../content/site';
 
 const langs: Record<Locale, string> = {
   en: 'English',
@@ -59,11 +51,12 @@ const roundByDPR = (value: number) => {
 };
 
 const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) => {
+  const isRouting = useIsRouting();
   const [showLangs, toggleLangs] = createSignal(false);
   const [subnav, setSubnav] = createSignal<{ links: LinkTypes[]; menuLinkEl: HTMLElement } | null>(
     null,
   );
-  const [locked, setLocked] = createSignal<boolean>(props.showLogo || true);
+  const [locked, setLocked] = createSignal(true);
   const closeSubnav = debounce(() => !disableMenuClose && setSubnav(null), 150);
 
   const ctx = useAppState();
@@ -89,37 +82,28 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
   intersectionObserver;
 
   const showLogo = createMemo(() => props.showLogo || !locked());
-  const navList = createMemo<LinkTypes[]>(
-    on(
-      () => [(t('global.nav') as LinkTypes[]) || [], ctx.guides] as const,
-      ([nav, guides]) => {
-        return nav.map<LinkTypes>((item) => {
-          const itm = { ...item };
-          // Inject guides if available
-          if (item.path == '/guides') {
-            if (guides?.length) {
-              const direction = ctx.dir;
-              itm.links = guides.map(({ title, description, resource }) => ({
-                title,
-                description,
-                direction,
-                path: `/guides/${resource}`,
-              }));
-              itm.direction = direction;
-            }
-          }
-          return itm;
-        }, []);
-      },
-    ),
+  const navList = createMemo<LinkTypes[]>(() =>
+    ((t('global.nav') as LinkTypes[]) || []).map((item) => {
+      const path = item.path.replace(/\/$/, '');
+      if (path === 'https://start.solidjs.com')
+        return {
+          ...item,
+          title: t('global.solid2_nav.apps'),
+          path: `${solidReferenceUrl}/getting-started/project-shapes`,
+          external: true,
+        };
+      if (path === 'https://playground.solidjs.com')
+        return { ...item, path: '/#playground', external: false };
+      return item;
+    }),
   );
 
-  createComputed(
-    on(
-      showLogo,
-      (showLogo) => (showLogo ? onEnterLogo(logoEl, isRTL()) : onExitLogo(logoEl, isRTL())),
-      { defer: true },
-    ),
+  createEffect(
+    () => [showLogo(), isRTL()] as const,
+    ([visible, rtl], previous) => {
+      if (previous === undefined) return;
+      return visible ? onEnterLogo(logoEl, rtl) : onExitLogo(logoEl, rtl);
+    },
   );
 
   const onClickLogo = () => {
@@ -136,10 +120,10 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
     }));
   };
 
-  createEffect(() => {
-    if (!subnav()) return;
+  createEffect(subnav, (menu) => {
+    if (!menu) return;
 
-    const referenceEl = subnav()!.menuLinkEl;
+    const referenceEl = menu.menuLinkEl;
     const floatingEl = subnavEl;
 
     const floatingElOffset = (navEl.offsetHeight - referenceEl.offsetHeight) / 2;
@@ -164,18 +148,23 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
       });
     });
 
-    onCleanup(() => cleanup());
+    return cleanup;
   });
 
   return (
     <>
-      <div use:intersectionObserver class="h-0" />
+      <div ref={intersectionObserver} class="h-0" />
       <div
-        class="sticky top-0 z-50 bg-white dark:bg-solid-darkbg"
-        classList={{ 'shadow-md dark:bg-solid-medium': showLogo() }}
+        class={[
+          'sticky top-0 z-50 bg-white dark:bg-solid-darkbg',
+          { 'shadow-md dark:bg-solid-medium': showLogo() },
+        ]}
       >
         <div class="flex justify-center w-full overflow-hidden">
-          <PageLoadingBar postion="top" active={showLogo() && routeReadyState().loadingBar} />
+          <PageLoadingBar
+            postion="top"
+            active={isRouting() || (showLogo() && routeReadyState().loadingBar)}
+          />
           <nav
             ref={navEl}
             class="relative px-3 lg:px-12 container lg:flex justify-between items-center max-h-18 z-20"
@@ -186,10 +175,10 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
               }`}
               ref={logoEl}
             >
-              <A
+              <a
                 href="/"
                 onClick={onClickLogo}
-                noScroll
+                noscroll
                 class={`py-3 flex w-9`}
                 aria-describedby="ukraine-support"
               >
@@ -199,14 +188,16 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
                   src={ukraine}
                   alt=""
                 />
-              </A>
+              </a>
               <span id="ukraine-support" hidden>
                 {t('home.ukraine.support')}
               </span>
             </div>
             <ScrollShadow
-              class="group relative nav-items-container transition-all duration-500"
-              classList={{ [isRTL() ? 'mr-[56px]' : 'ml-[56px]']: showLogo() }}
+              class={[
+                'group relative nav-items-container transition-all duration-500',
+                { [isRTL() ? 'mr-[56px]' : 'ml-[56px]']: showLogo() },
+              ]}
               direction="horizontal"
               rtl={isRTL()}
               shadowSize="25%"
@@ -260,11 +251,13 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
           <div class="absolute w-full md:w-96 mt-2 md:ml-12 md:mr-5 border dark:border-solid-darkbg rounded-md transition-composite bg-white dark:bg-solid-darkLighterBg shadow-md">
             {entries(langs).map(([lang, label]) => (
               <button
-                class="first:rounded-t hover:bg-solid-light hover:text-white last:rounded-b border-r p-3 text-sm border-b text-center dark:border-solid-darkbg/70 w-3/6"
-                classList={{
-                  'bg-solid-medium text-white': lang == ctx.locale,
-                  'hover:bg-solid-light': lang == ctx.locale,
-                }}
+                class={[
+                  'first:rounded-t hover:bg-solid-light hover:text-white last:rounded-b border-r p-3 text-sm border-b text-center dark:border-solid-darkbg/70 w-3/6',
+                  {
+                    'bg-solid-medium text-white': lang == ctx.locale,
+                    'hover:bg-solid-light': lang == ctx.locale,
+                  },
+                ]}
                 onClick={() => {
                   ctx.setLocale(lang);
                   toggleLangs(false);
@@ -278,8 +271,8 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
         <Show when={subnav() && subnav()!.links.length !== 0}>
           <div
             ref={subnavEl}
-            onmouseenter={closeSubnav.clear}
-            onmouseleave={closeSubnav}
+            onMouseEnter={closeSubnav.clear}
+            onMouseLeave={closeSubnav}
             class="absolute w-max top-0 left-0 bg-gray-200 dark:bg-solid-darkLighterBg shadow-2xl max-w-sm overflow-auto"
           >
             <ul class="divide-x divide-transparent flex flex-col">
@@ -294,7 +287,7 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
                       }
                     }
                   >
-                    <A
+                    <a
                       onClick={() => setSubnav(null)}
                       class="px-6 py-5 w-full block"
                       href={link.path}
@@ -303,7 +296,7 @@ const Nav: ParentComponent<{ showLogo?: boolean; filled?: boolean }> = (props) =
                       <Show when={link.description}>
                         <span class="block text-sm text-gray-400">{link.description}</span>
                       </Show>
-                    </A>
+                    </a>
                   </li>
                 )}
               </For>

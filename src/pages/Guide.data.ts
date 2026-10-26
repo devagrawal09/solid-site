@@ -1,31 +1,43 @@
-import { useLocation, type RouteLoadFunc } from '@solidjs/router';
-import { createResource } from 'solid-js';
-import { getDoc } from '@solid.js/docs';
-import type { DocData } from './Docs.data';
-import { useAppState } from '../AppContext';
+import { useNavigate } from '@solidjs/router';
+import type { RouteDataFactory } from '../utils/routeData';
+import { createEffect, createMemo, type Component } from 'solid-js';
+import {
+  getGuide,
+  guideDirectory,
+  legacyGuideDestinations,
+  type GuideMetadata,
+} from '../content/guides';
 
-export const GuideData: RouteLoadFunc<DocData> = (props) => {
-  const location = useLocation();
-  const ctx = useAppState();
+export interface GuideRouteData {
+  metadata?: GuideMetadata;
+  markdown?: Component;
+}
 
-  const paramList = () => ({
-    lang: location.query.locale ? location.query.locale : ctx.locale,
-    resource: props.params.id,
-  });
-  const [resource] = createResource(paramList, async ({ lang, resource }) => {
-    const requestedLang = await getDoc(lang, resource);
-    if (requestedLang) return { doc: requestedLang, fallback: false };
-    return { doc: await getDoc('en', resource), fallback: true };
-  });
+export const GuideData: RouteDataFactory<GuideRouteData> = (props) => {
+  const navigate = useNavigate();
+  const metadata = createMemo(() => guideDirectory.find((guide) => guide.id === props.params.id));
+  const markdown = createMemo(() => getGuide(props.params.id || ''));
+
+  createEffect(
+    () => ({
+      destination: Object.hasOwn(legacyGuideDestinations, props.params.id || '')
+        ? legacyGuideDestinations[props.params.id!]
+        : undefined,
+      search: props.location.search,
+    }),
+    ({ destination, search }) => {
+      if (!destination) return;
+      const [path, hash] = destination.split('#');
+      navigate(`${path}${search}${hash ? `#${hash}` : ''}`, { replace: true });
+    },
+  );
+
   return {
-    get doc() {
-      return resource()?.doc;
+    get metadata() {
+      return metadata();
     },
-    get loading() {
-      return resource.loading;
-    },
-    get fallback() {
-      return !!resource()?.fallback;
+    get markdown() {
+      return markdown();
     },
   };
 };

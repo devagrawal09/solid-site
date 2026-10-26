@@ -2,14 +2,14 @@ import { type Component, createMemo, createSignal, For, Show } from 'solid-js';
 import Footer from '../components/Footer';
 import { useRouteReadyState } from '../utils/routeReadyState';
 import type { CartUtilities, ShopifyProduct } from '../utils/shopify';
-import { Icon } from 'solid-heroicons';
-import { shoppingCart, chevronRight } from 'solid-heroicons/solid';
-import { minusCircle, plusCircle, xCircle } from 'solid-heroicons/outline';
-import Dismiss from 'solid-dismiss';
+import { Icon } from '../components/icons/Icon';
+import { shoppingCart, chevronRight } from '../components/icons/solid';
+import { minusCircle, plusCircle, xCircle } from '../components/icons/outline';
+import Dismiss from '../components/Dismiss';
 import { Title } from '@solidjs/meta';
 
 const Product: Component<{ details: ShopifyProduct; cart: CartUtilities }> = (props) => {
-  const [current, setCurrent] = createSignal(props.details.variants[0].id);
+  const [current, setCurrent] = createSignal(() => props.details.variants[0].id);
   const [showInfo, setShowInfo] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
   const variant = createMemo(() => {
@@ -76,10 +76,12 @@ const Product: Component<{ details: ShopifyProduct; cart: CartUtilities }> = (pr
             title="Remove item"
             disabled={loading() || quantity() == 0}
             onClick={() => (quantity() == 1 ? void remove() : adjustQuantity(-1))}
-            class="transition text-solid-light hover:opacity-60 disabled:hidden disabled:text-solid-light font-semibold text-lg rounded-full w-25 h-25"
-            classList={{
-              'opacity-80': loading(),
-            }}
+            class={[
+              'transition text-solid-light hover:opacity-60 disabled:hidden disabled:text-solid-light font-semibold text-lg rounded-full w-25 h-25',
+              {
+                'opacity-80': loading(),
+              },
+            ]}
           >
             <Icon class="h-8" path={minusCircle} />
           </button>
@@ -87,10 +89,12 @@ const Product: Component<{ details: ShopifyProduct; cart: CartUtilities }> = (pr
             title="Add item"
             disabled={loading()}
             onClick={() => adjustQuantity(1)}
-            class="transition text-white bg-solid-light px-3 py-2 hover:text-solid-dark disabled:text-white font-semibold text-xs rounded-full w-25 h-25"
-            classList={{
-              'opacity-80': loading(),
-            }}
+            class={[
+              'transition text-white bg-solid-light px-3 py-2 hover:text-solid-dark disabled:text-white font-semibold text-xs rounded-full w-25 h-25',
+              {
+                'opacity-80': loading(),
+              },
+            ]}
           >
             <Show fallback="Saving..." when={!loading()}>
               + Add

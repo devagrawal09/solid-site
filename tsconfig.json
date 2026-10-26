@@ -5,13 +5,13 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "declaration": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "jsx": "preserve",
     "resolveJsonModule": true,
     "newLine": "lf",
     "sourceMap": true,
-    "jsxImportSource": "solid-js",
-    "types": ["vite/client", "solid-repl/dist/types"],
+    "jsxImportSource": "@solidjs/web",
+    "types": ["vite/client"],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "skipLibCheck": true,
@@ -19,6 +19,17 @@
     "noEmit": true,
     "lib": ["ESNext", "DOM", "DOM.Iterable", "WebWorker"]
   },
-  "include": ["./src/**/*", "./vite.config.ts", "./scripts", "src/types.d.ts"],
+  "include": [
+    "./src/**/*",
+    "./vite.config.ts",
+    "./scripts",
+    "./packages/**/*.ts",
+    "./server/**/*.ts",
+    "./db/**/*.ts",
+    "./drizzle.config.ts",
+    "./tests/**/*.ts",
+    "./playwright.config.ts",
+    "src/types.d.ts"
+  ],
   "exclude": ["node_modules/"]
 }

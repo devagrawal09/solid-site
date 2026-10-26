@@ -6,8 +6,7 @@
   "nav": [
     {
       "title": "Documentation",
-      "path": "https://docs.solidjs.com",
-      "external": true
+      "path": "/docs"
     },
     {
       "title": "Tutorial",
@@ -109,5 +108,8 @@
     "updated": "Last updated {{date}} on Solid v{{version}}"
   },
   "dark_mode": "Dark mode",
-  "light_mode": "Light mode"
+  "light_mode": "Light mode",
+  "solid2_nav": {
+    "apps": "Build apps"
+  }
 }

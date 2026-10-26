@@ -1,17 +1,20 @@
-import type { RouteLoadFunc } from '@solidjs/router';
-import { createResource } from 'solid-js';
-import { getTutorial, getTutorialDirectory, type LessonLookup } from '@solid.js/docs';
-import { useAppState } from '../AppContext';
-
-type JsFiles = {
-  files: { name: string; type?: string; content: string }[];
-};
+import type { RouteDataFactory } from '../utils/routeData';
+import { createEffect, createMemo, isPending, type Component } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
+import {
+  canonicalTutorialId,
+  firstTutorialId,
+  getTutorial,
+  tutorialDirectory,
+  type LessonFiles,
+  type LessonLookup,
+} from '../content/tutorials';
 
 export interface TutorialRouteData {
   loading: boolean;
-  markdown?: string;
-  js?: JsFiles;
-  solvedJs?: JsFiles;
+  markdown?: Component;
+  js?: LessonFiles;
+  solvedJs?: LessonFiles;
   tutorialDirectory?: Record<string, LessonLookup[]>;
   tutorialDirectoryEntry?: LessonLookup;
   nextUrl?: string;
@@ -22,35 +25,33 @@ export interface TutorialRouteData {
   solved?: boolean;
 }
 
-export const TutorialData: RouteLoadFunc<TutorialRouteData> = (props) => {
-  const ctx = useAppState();
-  const paramList = () => ({ lang: ctx.locale, id: props.params.id || 'introduction_basics' });
-  const [directory] = createResource(paramList, async ({ lang }) => {
-    const requestedLang = await getTutorialDirectory(lang);
-    if (requestedLang) return requestedLang;
-    return await getTutorialDirectory('en');
-  });
-  const [data] = createResource(paramList, async ({ lang, id }) => {
-    const requestedLang = await getTutorial(lang, id);
-    if (requestedLang?.lesson) return requestedLang;
-    return await getTutorial('en', id);
-  });
+export const TutorialData: RouteDataFactory<TutorialRouteData> = (props) => {
+  const navigate = useNavigate();
+  const id = () => canonicalTutorialId(props.params.id || firstTutorialId);
+  const directory = () => tutorialDirectory;
+  createEffect(
+    () => ({ original: props.params.id, id: id(), search: props.location.search }),
+    (value) => {
+      if (value.original !== value.id)
+        navigate(`/tutorial/${value.id}${value.search}`, { replace: true, scroll: false });
+    },
+  );
+  const data = createMemo(() => getTutorial(id()));
 
-  const currentIndex = (data: LessonLookup[]) =>
-    data.findIndex((el) => el.internalName === paramList().id);
+  const currentIndex = (data: LessonLookup[]) => data.findIndex((el) => el.internalName === id());
 
   return {
     get loading() {
-      return data.loading;
+      return isPending(data);
     },
     get markdown() {
-      return data()?.markdown;
+      return data().markdown;
     },
     get js() {
-      return data()?.lesson as JsFiles;
+      return data().lesson;
     },
     get solvedJs() {
-      return data()?.solved as JsFiles;
+      return data().solved;
     },
     get tutorialDirectory() {
       const data = directory();
@@ -69,7 +70,8 @@ export const TutorialData: RouteLoadFunc<TutorialRouteData> = (props) => {
     get tutorialDirectoryEntry() {
       const data = directory();
       if (!data) return;
-      return data.find((el) => el.internalName === paramList().id);
+      const entry = data.find((el) => el.internalName === id());
+      return entry && { ...entry, lessonName: entry.lessonName.split('/').pop()! };
     },
     get nextUrl() {
       const data = directory();
@@ -96,7 +98,7 @@ export const TutorialData: RouteLoadFunc<TutorialRouteData> = (props) => {
       if (index - 1 >= 0) return data[index - 1].lessonName.split('/').pop();
     },
     get id() {
-      return paramList().id;
+      return id();
     },
     get solved() {
       return !!props.location.search.includes('solved');

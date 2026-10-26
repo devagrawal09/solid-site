@@ -1,0 +1,123 @@
+Want to try the model before setting up a project? The [interactive tutorial](/tutorial/welcome) runs in your browser. Start here when you want the same release running locally.
+
+This guide pins **Solid 2.0.0-rc.18** and its compatible Vite plugin. Use **Node.js 22.12 or newer**. Keep the core and web renderer on the same release, and commit your package manager's lockfile.
+
+<h2 id="create-project">Create the project</h2>
+
+In a terminal, create an empty directory and install the packages:
+
+```sh
+mkdir solid-two
+cd solid-two
+npm init -y
+npm pkg set type=module
+npm pkg set scripts.dev=vite
+npm pkg set 'scripts.build=tsc --noEmit && vite build'
+npm pkg set 'scripts.preview=vite preview'
+npm install --save-exact solid-js@2.0.0-rc.18 @solidjs/web@2.0.0-rc.18
+npm install --save-dev --save-exact @solidjs/vite-plugin@3.0.0-next.51 vite@8.3.5 typescript@5.9.2
+```
+
+The `solid-js` package supplies signals, stores, ownership, and flow components. `@solidjs/web` connects that graph to the browser. The Vite plugin compiles JSX so individual bindings can update.
+
+<h2 id="configure-vite">Configure Vite and TypeScript</h2>
+
+Create `vite.config.ts`:
+
+```ts
+import { defineConfig } from 'vite';
+import solid from '@solidjs/vite-plugin';
+
+export default defineConfig({
+  plugins: [solid()],
+});
+```
+
+Create `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "preserve",
+    "jsxImportSource": "@solidjs/web",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"]
+  },
+  "include": ["src", "vite.config.ts"]
+}
+```
+
+The JSX types belong to the renderer. A web project uses `@solidjs/web` as its `jsxImportSource`.
+
+<h2 id="render-app">Render a small app</h2>
+
+Create `index.html` at the project root:
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My Solid 2 app</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+```
+
+Create a `src` directory, then `src/main.tsx`:
+
+```tsx
+import { createSignal } from 'solid-js';
+import { render } from '@solidjs/web';
+
+function Counter() {
+  const [count, setCount] = createSignal(0);
+  const doubled = () => count() * 2;
+
+  return (
+    <button onClick={() => setCount((value) => value + 1)}>
+      Count: {count()} · Doubled: {doubled()}
+    </button>
+  );
+}
+
+const host = document.getElementById('app');
+if (!host) throw new Error('The page needs an #app element.');
+
+render(() => <Counter />, host);
+```
+
+Start the development server:
+
+```sh
+npm run dev
+```
+
+Open the URL printed in your terminal. Each click changes the source `count`; the bindings that read it update after the current batch. The component function sets up that relationship once. `doubled` expresses an answer that follows from `count` without storing a second copy of it.
+
+Change the expression to `count() * 3` and save the file. Then check the project with:
+
+```sh
+npm run build
+```
+
+This runs TypeScript before producing the browser build in `dist`. `npm run preview` serves that build locally.
+
+<h2 id="next-step">Choose the next thing to learn</h2>
+
+- Follow [sources and derivations](/tutorial/signals) to learn where reads are tracked and when writes become visible.
+- Explore [components and props](/tutorial/components), then [effects and lifetime](/tutorial/effects).
+- Try [async derivations](/tutorial/async-memos) after the synchronous model makes sense.
+- Use the [Solid 2 API reference](https://v2.solidjs.com/reference) to look up a signature, and [project shapes](https://v2.solidjs.com/getting-started/project-shapes) when your app needs routing or server behavior.
+
+Before adding a library, check its Solid peer dependencies and its own Solid 2 instructions. A package that supports Solid 1 does not automatically support Solid 2. An existing project can follow the [migration guide](/guides/migrating-from-solid-1) instead of replacing its structure with this minimal app.

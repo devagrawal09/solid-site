@@ -1,7 +1,7 @@
 import type { Component } from 'solid-js';
 import { Title } from '@solidjs/meta';
-import { Icon } from 'solid-heroicons';
-import { emojiSad } from 'solid-heroicons/outline';
+import { Icon } from '../components/icons/Icon';
+import { emojiSad } from '../components/icons/outline';
 import { useAppState } from '../AppContext';
 
 const FourOhFour: Component = () => {

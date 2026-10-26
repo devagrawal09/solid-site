@@ -1,4 +1,4 @@
-import { code, videoCamera, bookOpen, microphone, terminal } from 'solid-heroicons/outline';
+import { code, videoCamera, bookOpen, microphone, terminal } from '../../components/icons/outline';
 
 export enum ResourceType {
   Article = 'article',

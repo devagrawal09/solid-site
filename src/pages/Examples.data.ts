@@ -23,13 +23,28 @@ const list: Record<'Basic' | 'Complex', Example[]> = {
     },
     {
       id: 'cssanimations',
-      name: 'CSS Animations',
-      description: 'Using Solid Transition Group',
+      name: 'DOM Animations',
+      description: 'Animate owned elements and cancel animation handles on disposal.',
     },
     {
       id: 'context',
       name: 'Context',
       description: 'A simple color picker using Context.',
+    },
+    {
+      id: 'styledjsx',
+      name: 'Component Styles',
+      description: 'Reactive CSS variables with independent component state.',
+    },
+    {
+      id: 'counterstore',
+      name: 'Shared Counter',
+      description: 'A counter factory provided through a Solid 2 context.',
+    },
+    {
+      id: 'routing',
+      name: 'Hash Routing',
+      description: 'Owned browser listeners and reactive route branches.',
     },
   ],
   Complex: [
@@ -41,22 +56,22 @@ const list: Record<'Basic' | 'Complex', Example[]> = {
     {
       id: 'ethasketch',
       name: 'Etch A Sketch',
-      description: 'Uses Index and createMemo to create a grid graphic.',
+      description: 'Uses position-based For and createMemo to create a grid graphic.',
     },
     {
       id: 'scoreboard',
       name: 'Scoreboard',
-      description: 'Make use of hooks to do simple transitions',
+      description: 'Sort derived state and animate reordered rows with split effects.',
     },
     {
       id: 'asyncresource',
-      name: 'Async Resource',
-      description: 'Ajax requests to SWAPI with Promise cancellation',
+      name: 'Async Data',
+      description: 'Async memos, initial loading, errors, and refresh.',
     },
     {
       id: 'suspensetabs',
-      name: 'Suspense Transitions',
-      description: 'Defered loading spinners for smooth UX',
+      name: 'Pending Updates',
+      description: 'Retain useful content while a newer async answer is pending.',
     },
     {
       id: 'simpletodos',

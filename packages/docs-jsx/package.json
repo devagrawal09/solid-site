@@ -1,0 +1,14 @@
+{
+  "name": "@solid-site/docs-jsx",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./jsx-runtime": "./jsx-runtime.ts",
+    "./jsx-dev-runtime": "./jsx-runtime.ts"
+  },
+  "peerDependencies": {
+    "solid-js": "2.0.0-rc.18",
+    "@solidjs/web": "2.0.0-rc.18"
+  }
+}

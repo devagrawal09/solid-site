@@ -1,6 +1,7 @@
 import { createEventListener } from '@solid-primitives/event-listener';
-import { A } from '@solidjs/router';
-import { batch, createSignal, JSX, onMount, ParentComponent, Show } from 'solid-js';
+
+import { createSignal, onSettled, ParentComponent, Show } from 'solid-js';
+import type { JSX } from '@solidjs/web';
 import { setRouteReadyState, page, reflow } from '../../utils';
 
 export type LinkTypes = {
@@ -28,9 +29,8 @@ export const MenuLink: ParentComponent<MenuLinkProps> = (props) => {
       'mouseenter',
       () => {
         props.clearSubnavClose();
-        batch(() => {
-          props.setSubnav(props.links!, wrapperEl);
-        });
+
+        props.setSubnav(props.links!, wrapperEl);
       },
     );
     createEventListener(
@@ -62,15 +62,18 @@ export const MenuLink: ParentComponent<MenuLinkProps> = (props) => {
     setLinkTarget(); // reset
   });
 
-  onMount(() => {
+  onSettled(() => {
     if (!window.location.pathname.startsWith(props.path)) return;
 
     linkEl.scrollIntoView({ inline: 'center', behavior: 'instant' as ScrollBehavior });
   });
 
   const onClick = () => {
-    if (window.location.pathname.startsWith(props.path)) {
-      window.scrollTo({ top: 0 });
+    const destination = new URL(props.path, window.location.href);
+    if (window.location.pathname === destination.pathname) {
+      if (destination.hash)
+        document.getElementById(destination.hash.slice(1))?.scrollIntoView({ block: 'start' });
+      else window.scrollTo({ top: 0 });
       return;
     }
     const pageEl = document.body;
@@ -86,13 +89,15 @@ export const MenuLink: ParentComponent<MenuLinkProps> = (props) => {
 
   return (
     <li ref={wrapperEl}>
-      <A
+      <a
         href={props.path}
         target={props.external ? '_blank' : undefined}
-        class="inline-flex items-center transition text-[15px] dark:hover:bg-solid-darkLighterBg sm:text-base m-0 sm:m-1 px-3 sm:px-4 py-3 rounded pointer-fine:hover:text-white pointer-fine:hover:bg-solid-medium whitespace-nowrap"
-        activeClass="bg-solid-medium dark:bg-solid-light text-white"
+        class={[
+          'inline-flex items-center transition text-[15px] dark:hover:bg-solid-darkLighterBg sm:text-base m-0 sm:m-1 px-3 sm:px-4 py-3 rounded pointer-fine:hover:text-white pointer-fine:hover:bg-solid-medium whitespace-nowrap',
+          'data-[active]:bg-solid-medium data-[active]:dark:bg-solid-light data-[active]:text-white',
+        ]}
         onClick={() => !props.external && onClick()}
-        noScroll
+        noscroll
         ref={linkEl}
       >
         <span>{props.title}</span>
@@ -111,7 +116,7 @@ export const MenuLink: ParentComponent<MenuLinkProps> = (props) => {
             />
           </svg>
         </Show>
-      </A>
+      </a>
     </li>
   );
 };

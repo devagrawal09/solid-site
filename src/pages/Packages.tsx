@@ -1,4 +1,5 @@
-import { type Component, For, Show, createSignal, createMemo, onMount, type JSX } from 'solid-js';
+import { type Component, For, Show, createSignal, untrack, createMemo, onSettled } from 'solid-js';
+import type { JSX } from '@solidjs/web';
 import { useNavigate, useSearchParams } from '@solidjs/router';
 import type { PackagesDataProps } from './Packages.data';
 import Fuse from 'fuse.js';
@@ -13,10 +14,10 @@ import {
 import { parseKeyword } from '../utils/parseKeyword';
 import { rememberSearch } from '../utils/rememberSearch';
 import SideContent from '../components/layout/SideContent';
-import { Icon } from 'solid-heroicons';
-import { DAY, createTimeAgo } from '@solid-primitives/date';
-import { shieldCheck } from 'solid-heroicons/solid';
-import { exclamation, externalLink } from 'solid-heroicons/outline';
+import { Icon } from '../components/icons/Icon';
+import { DAY, createTimeAgo } from '../utils/relativeTime';
+import { shieldCheck } from '../components/icons/solid';
+import { exclamation, externalLink } from '../components/icons/outline';
 import { useAppState } from '../AppContext';
 import { keys } from '@solid-primitives/utils';
 import { Title } from '@solidjs/meta';
@@ -31,11 +32,13 @@ const FilterButton: Component<{
   <>
     <button
       onClick={props.onClick}
-      classList={{
-        'opacity-20 cursor-default': !props.active,
-        'hover:opacity-60': props.active,
-      }}
-      class="flex items-center w-full text-sm px-4 py-2 min-h-[50px] text-left border border-gray-400 rounded"
+      class={[
+        'flex items-center w-full text-sm px-4 py-2 min-h-[50px] text-left border border-gray-400 rounded',
+        {
+          'opacity-20 cursor-default': !props.active,
+          'hover:opacity-60': props.active,
+        },
+      ]}
     >
       <Show when={props.type}>
         <figure class="flex justify-center content-center -ml-2 mr-2 w-10 h-10 p-1.5 border-4 border-solid rounded-full text-white flex-shrink-0">
@@ -79,8 +82,7 @@ const FilterOfficial: Component<{
 const ResourceLink: Component<Resource> = (props) => {
   const { t } = useAppState();
 
-  const published = new Date(0);
-  published.setTime(props.published_at || 0);
+  const published = createMemo(() => new Date(props.published_at || 0));
 
   const [publishTimeAgo, { difference }] = createTimeAgo(published);
 
@@ -119,7 +121,7 @@ const ResourceLink: Component<Resource> = (props) => {
           </Show>
           <Show when={props.published_at}>
             <div class="rtl:text-right text-xs text-gray-400 block">
-              {t('resources.published')} {published.toDateString()}
+              {t('resources.published')} {published().toDateString()}
               <Show when={difference() / DAY < 60}>
                 <span class="text-gray-300"> - {publishTimeAgo()}</span>
               </Show>
@@ -161,7 +163,9 @@ const Packages: Component<{ data: PackagesDataProps }> = (props) => {
     setMaintainedCheck((target as HTMLInputElement).checked);
 
   const [searchParams] = useSearchParams();
-  const [keyword, setKeyword] = createSignal(parseKeyword(searchParams.search || ''));
+  const [keyword, setKeyword] = createSignal(
+    untrack(() => parseKeyword(typeof searchParams.search === 'string' ? searchParams.search : '')),
+  );
   const debouncedKeyword = debounce((str: string) => setKeyword(str), 250);
   rememberSearch(keyword);
 
@@ -230,7 +234,7 @@ const Packages: Component<{ data: PackagesDataProps }> = (props) => {
     document.getElementById(category)?.scrollIntoView(true);
   };
 
-  onMount(() => {
+  onSettled(() => {
     const hash = globalThis.location.hash.replace(/^#/, '');
     if (!hash) return;
   });
@@ -278,7 +282,7 @@ const Packages: Component<{ data: PackagesDataProps }> = (props) => {
         }
         content={
           <>
-            <div use:intersectionObserver class="absolute top-0" />
+            <div ref={intersectionObserver} class="absolute top-0" />
             <div
               class="block lg:hidden text-xs bg-gray-100 dark:bg-solid-darkLighterBg p-4 rounded"
               innerHTML={t('resources.cta')}
@@ -294,10 +298,12 @@ const Packages: Component<{ data: PackagesDataProps }> = (props) => {
               />
               <FilterOfficial active={officialCheck()} onChange={toggleOfficial} />
               <div
-                class="relative h-2"
-                classList={{
-                  'shadow-md': stickyBarActive(),
-                }}
+                class={[
+                  'relative h-2',
+                  {
+                    'shadow-md': stickyBarActive(),
+                  },
+                ]}
               />
             </div>
             <Show

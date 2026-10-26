@@ -1,6 +1,6 @@
-import type { RouteLoadFunc } from '@solidjs/router';
+import type { RouteDataFactory } from '../utils/routeData';
 import type { Component } from 'solid-js';
-import type { SpotifyProps, TweetProps, TwitchProps, YouTubeProps } from 'solid-social';
+import type { SpotifyProps, TweetProps, TwitchProps, YouTubeProps } from '../components/embeds';
 
 export type MDXComponent = Component<{
   components: {
@@ -115,7 +115,7 @@ export interface BlogData {
   articles: { [key: string]: BlogInfo };
 }
 
-export const BlogData: RouteLoadFunc<BlogData> = () => {
+export const BlogData: RouteDataFactory<BlogData> = () => {
   return {
     get articles() {
       return list;

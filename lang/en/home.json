@@ -1,121 +1,99 @@
 {
-    "hero": "Simple and performant reactivity for building user interfaces.",
-    "get_started": "Get Started",
-    "intro_video": "Intro to Solid (100 seconds)",
-    "intro_video_advanced": "Advanced intro (5 minutes)",
-    "news":
-      {
-        "content": "Visit the <b>Solid Store</b> for stickers, t-shirts and more!"
-      },
-    "strengths": [
+  "v2": {
+    "release": "Release candidate",
+    "hero": "Reactive UI, ready for async.",
+    "intro": "Build interfaces from state and the answers that depend on it. Solid connects those reads to precise updates, whether the answer is ready now or arrives later.",
+    "learn": "Learn Solid 2",
+    "migrate": "Coming from Solid 1?",
+    "announcement": "Explore the new tutorial, project setup, and migration guide",
+    "translation_notice": "The Solid 2 homepage is currently available in English. Site navigation stays in your selected language.",
+    "principles": [
       {
         "icon": "performant",
-        "label": "Performant",
-        "description": "Consistently tops recognized benchmarks for UI speed and memory utilization."
+        "label": "Small updates",
+        "description": "JSX compiles to DOM bindings. A state change updates the parts that read it."
       },
       {
         "icon": "powerful",
-        "label": "Powerful",
-        "description": "Composable reactive primitives plus the flexibility of JSX."
+        "label": "Derived answers",
+        "description": "Calculate what follows from state instead of keeping another copy in sync."
       },
       {
         "icon": "pragmatic",
-        "label": "Pragmatic",
-        "description": "A sensible and tailored API that makes development fun and simple."
+        "label": "Owned work",
+        "description": "Give state, subscriptions, and cleanup the lifetime of a component or branch."
       },
       {
         "icon": "productive",
-        "label": "Productive",
-        "description": "Ergonomics and familiarity that make building simple or complex frontends a breeze."
-      }
-    ],
-    "facts": [
-      {
-        "label": "7kb",
-        "detail": "Minified + Gzipped",
-        "link": "https://bundlephobia.com/package/solid-js@1.2.1"
-      },
-      {
-        "label": "32k+",
-        "detail": "GitHub stars",
-        "link": "https://star-history.t9t.io/#solidjs/solid"
-      },
-      {
-        "label": "5+ years",
-        "detail": "In development"
-      },
-      {
-        "label": "TypeScript",
-        "detail": "Support"
-      },
-      {
-        "label": "Top Rated",
-        "detail": "In performance"
-      },
-      {
-        "label": "Astro & Vite",
-        "detail": "Support"
+        "label": "Async by design",
+        "description": "Keep promises in the reactive graph and choose where loading and error states belong."
       }
     ],
     "example": {
-      "headline": "Familiar and modern",
+      "headline": "Change the state. Follow the result.",
       "copy": [
-        "Solid stands on the shoulders of giants, particularly React and Knockout. If you've developed with React Functional Components and Hooks before, Solid will feel very natural because it follows the same philosophy as React, with unidirectional data flow, read/write segregation, and immutable interfaces.",
-        "It may feel even more natural because Solid's update model is simpler and has no Hook rules. Components execute just once, when they are first rendered, and Hooks and bindings only execute when their dependencies update. This completely different implementation forgoes a Virtual DOM."
+        "Click the counter, then watch its doubled value follow. The signal holds writable state; the derived function calculates an answer. Each binding tracks the values it reads.",
+        "The component sets up those relationships once. Change the formula in the editor and try it again. You do not need an effect to synchronize the two numbers."
       ],
-      "link_label": "View Docs",
-      "link": "https://docs.solidjs.com/"
+      "hint": "Edit the source or click the counter in Preview.",
+      "loading": "Starting the Solid 2 editor…",
+      "link_label": "Learn sources and derivations"
     },
-    "reactivity": {
-      "headline": "Fine-grained reactivity lets you do more with less.",
-      "subheadline": "Solid is built with efficient reactive primitives you can use from your business logic to your JSX views.",
-      "copy": "This unlocks complete control over what gets updated and when, even at the DOM binding level. With no Virtual DOM or extensive diffing, the framework never does more work than you want it to.",
-      "link_label": "See it in action",
-      "link": "https://playground.solidjs.com/?version=1.0.0#NobwRAdghgtgpmAXGGUCWEwBowBcCeADgsrgM4Ae2YZA9gK4BOAxiWGjIbY7gAQi9GcCABM4jXgF9eAM0a0YvAOR0ANmhEBaAFZkA9AHc4AIyUBuADoQOXHv17MhUXHADKaAObRVU2fMUqtOpauuZWVjL0EMy4aLQQvACChIQAFACU-Fa8DvFkfMBQMWgAbnBYvGRwuInFZQC6vAC8Dk4u7l5Qqqm4jPRw6ZYQ2YLVTAkAPCKlDqpQZGRNIEWxZRm8APy8FmArpXA7vIjbYDuSAHwAEmgTetMl51aS4RBCouKp603nvBPJhLw9OcKiJaMx6PAILgAHQeaoAUVUcEhuAAQvgAJIiVJKKApJTpdJWMCSepAA"
+    "ownership": {
+      "headline": "State lives where you put it.",
+      "copy": "A component or control-flow branch owns its reactive work. Put local state with the UI that uses it, share a state factory when several components need it, and return cleanup when external work should stop with its owner.",
+      "link_label": "Explore ownership and lifetime"
     },
-    "performance": {
-      "headline": [
-        "Performance focused",
-        "on both client and server"
-      ],
-      "copy": "Fine-grained reactivity's performance shines on all notable benchmarks. Even if performance is not your focus, Solid can provide it without complicating your DX. Think of Solid's performance gain as a free win.",
-      "link_label": "Read full article",
-      "link": "https://ryansolid.medium.com/solidjs-the-tesla-of-javascript-ui-frameworks-6a1d379bc05e"
-    },
-    "features": {
-      "headline": "Fully loaded with all features.",
-      "copy": "Solid supports all expected modern library features and even improves some of them for better DX.",
-      "list": [
-        "Fragments",
-        "Portals",
-        "Context",
-        "Suspense",
-        "Error Boundaries",
-        "Lazy Components",
-        "Async & Concurrent Rendering",
-        "Implicit Delegation",
-        "SSR & Hydration",
-        "Directives",
-        "Streaming"
+    "async": {
+      "headline": "An answer can take time.",
+      "copy": "An async memo describes data that depends on state. Boundaries decide how that work appears in the UI. First readiness, a pending change, and a server write each have a different job.",
+      "steps": [
+        {
+          "title": "Show the first answer",
+          "copy": "Read an async result under Loading. Use Errored to give failures a recovery path.",
+          "link": "/tutorial/async-memos",
+          "label": "Read async data"
+        },
+        {
+          "title": "Keep useful content",
+          "copy": "Let the current answer stay visible while the next one arrives. Use isPending to show that a change is on its way.",
+          "link": "/tutorial/pending",
+          "label": "Handle pending changes"
+        },
+        {
+          "title": "Write, then reconcile",
+          "copy": "Coordinate mutations with actions. Refresh authoritative reads and use optimistic state for a temporary view.",
+          "link": "/tutorial/actions",
+          "label": "Build an action"
+        }
       ]
     },
-    "benchmarks": {
-      "time": "Time",
-      "view": "View the benchmark",
-      "show_more": "Show more client + server benchmarks",
-      "link_label": "The JS Framework Benchmark compares browser performance across a wide range of tests. Lower is better.",
-      "js_benchmark": {
-        "title": "JS Framework Benchmark",
-        "description": "The JS Framework Benchmark compares browser performance across a wide range of tests. Lower is better."
-      },
-      "isomorophic_benchmark": {
-        "title": "Isomorphic UI Benchmarks (Search Results)",
-        "description": "This benchmark tests raw Server Rendering speeds. Higher is better."
-      }
+    "features": {
+      "headline": "Primitives that compose into an app.",
+      "copy": "Use the same model for local interactions, structured state, async data, and rendering. Add routing or server behavior as your project needs it.",
+      "list": [
+        "Signals and memos",
+        "Writable derivations",
+        "Draft-based stores",
+        "Context",
+        "Owned cleanup",
+        "Loading and Errored",
+        "Actions and optimistic state",
+        "Portals and lazy components",
+        "Ref factories",
+        "SSR, hydration, and streaming"
+      ],
+      "setup": "Start a project",
+      "reference": "Open the Solid 2 reference"
     },
-    "ukraine": {
-      "link": "https://www.un.org/en/globalceasefire",
-      "support": "Support Global Ceasefire!",
-      "petition": "End war in Ukraine and all global conflict →"
+    "performance": {
+      "copy": "For performance comparisons, check the framework version, browser, and test being measured.",
+      "link_label": "Explore the JS Framework Benchmark"
     }
+  },
+  "ukraine": {
+    "link": "https://www.un.org/en/globalceasefire",
+    "support": "Support Global Ceasefire!",
+    "petition": "End war in Ukraine and all global conflict →"
   }
+}

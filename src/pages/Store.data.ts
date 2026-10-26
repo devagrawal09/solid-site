@@ -1,6 +1,5 @@
-import { createEffect, on } from 'solid-js';
-import type { RouteLoadFunc } from '@solidjs/router';
-import { createCookieStorage } from '@solid-primitives/storage';
+import { createEffect, isPending } from 'solid-js';
+import { cookieStorage } from '@solid-primitives/storage';
 import { createCollection, createCart } from '../utils/shopify';
 
 const settings = {
@@ -8,32 +7,27 @@ const settings = {
   domain: 'solidjs.myshopify.com',
 };
 
-export const StoreData: RouteLoadFunc = () => {
+export const StoreData = () => {
   const [collection] = createCollection(() => 'gid://shopify/Collection/285612933298', settings);
-  const [cookie, setCookie] = createCookieStorage();
-  const id: string | null =
-    !cookie.cartId || cookie.cartId === '' ? null : (cookie.cartId as string);
+  const id = cookieStorage.getItem('cartId');
   const commerce = createCart(id, settings);
   createEffect(
-    on(
-      () => [commerce.loading(), commerce.cart.id, commerce.cart.id],
-      () => {
-        if (commerce.loading() === true) return;
-        if (commerce.cart.id !== cookie.cartId) {
-          setCookie('cartId', commerce.cart.id);
-        }
-      },
-    ),
+    () => [commerce.loading(), commerce.cart.id] as const,
+    ([loading, cartId]) => {
+      if (!loading && cartId && String(cartId) !== cookieStorage.getItem('cartId')) {
+        cookieStorage.setItem('cartId', String(cartId));
+      }
+    },
   );
   return {
     get commerce() {
       return commerce;
     },
     get loading() {
-      return collection.loading;
+      return isPending(collection);
     },
     get products() {
-      return collection()?.products;
+      return collection().products ?? [];
     },
   };
 };

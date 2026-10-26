@@ -2,11 +2,8 @@
   "files": [
     {
       "name": "main",
-      "content": "import { render } from \"solid-js/web\";\nimport { type CounterProvider, useCounter } from \"CounterStore.tsx\";\n\nconst MiddleComponent = () => <NestedComponent />;\n\nconst NestedComponent = () => {\n  const [count, { increment, decrement }] = useCounter();\n  return (\n    <>\n      <p>{count()}</p>\n      <button onClick={increment}>+</button>\n      <button onClick={decrement}>-</button>\n    </>\n  );\n};\n\nconst App = () => (\n  <CounterProvider count={7}>\n    <MiddleComponent />\n  </CounterProvider>\n);\n\nrender(App, document.getElementById(\"app\"));"
-    },
-    {
-      "name": "CounterStore",
-      "content": "import { createSignal, createContext, useContext, type Component } from \"solid-js\";\n\ntype CounterStore = [\n  () => number,\n  { increment?: () => void; decrement?: () => void }\n];\n\nconst CounterContext = createContext<CounterStore>([() => 0, {}]);\n\nexport const CounterProvider: Component<{ count: number }> = props => {\n  const [count, setCount] = createSignal(props.count || 0),\n    store: CounterStore = [\n      count,\n      {\n        increment() {\n          setCount(c => c + 1);\n        },\n        decrement() {\n          setCount(c => c - 1);\n        }\n      }\n    ];\n\n  return (\n    <CounterContext.Provider value={store}>\n      {props.children}\n    </CounterContext.Provider>\n  );\n};\n\nexport function useCounter() {\n  return useContext(CounterContext);\n}"
+      "type": "jsx",
+      "content": "import { render } from '@solidjs/web';\nimport { createContext, useContext, createSignal } from 'solid-js';\n\nconst Counter = createContext();\nfunction CounterProvider(props) {\n  const [count, setCount] = createSignal(() => props.count ?? 0);\n  return (\n    <Counter\n      value={[\n        count,\n        {\n          increment: () => setCount((n) => n + 1),\n          decrement: () => setCount((n) => n - 1),\n        },\n      ]}\n    >\n      {props.children}\n    </Counter>\n  );\n}\nfunction Nested() {\n  const [count, actions] = useContext(Counter);\n  return (\n    <>\n      <p>Count: {count()}</p>\n      <button onClick={actions.increment}>+</button>\n      <button onClick={actions.decrement}>-</button>\n    </>\n  );\n}\nfunction App() {\n  return (\n    <CounterProvider count={7}>\n      <Nested />\n    </CounterProvider>\n  );\n}\n\nrender(() => <App />, document.getElementById('app'));\n"
     }
   ]
 }

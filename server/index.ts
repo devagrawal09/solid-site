@@ -251,7 +251,7 @@ export default {
       !url.pathname.startsWith('/assets/') &&
       !url.pathname.startsWith('/api/')
     ) {
-      asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url), request));
+      asset = await env.ASSETS.fetch(new Request(new URL('/', request.url), request));
     }
     if (
       !asset.headers.get('Content-Type')?.includes('text/html') ||

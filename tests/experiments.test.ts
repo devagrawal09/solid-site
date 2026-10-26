@@ -47,11 +47,13 @@ function setup() {
                 'Cache-Control': 'public, max-age=3600',
               },
             })
-          : ['/', '/index.html'].includes(new URL(request.url).pathname)
-            ? new Response('<!doctype html><html><head></head><body>Solid</body></html>', {
-                headers: { 'Content-Type': 'text/html' },
-              })
-            : new Response('Not found', { status: 404 }),
+          : new URL(request.url).pathname === '/index.html'
+            ? new Response(null, { status: 308, headers: { Location: '/' } })
+            : new URL(request.url).pathname === '/'
+              ? new Response('<!doctype html><html><head></head><body>Solid</body></html>', {
+                  headers: { 'Content-Type': 'text/html' },
+                })
+              : new Response('Not found', { status: 404 }),
     },
   };
   const call = (path: string, options: RequestInit = {}) => {

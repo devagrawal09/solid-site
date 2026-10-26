@@ -24,6 +24,8 @@ const redirectTo =
   };
 
 export const routes: RouteDefinition[] = [
+  { path: '/experiments', component: lazy(() => import('./pages/Experiments')) },
+  { path: '/privacy', component: lazy(() => import('./pages/Privacy')) },
   {
     path: '/',
     component: lazy(() => import('./pages/Home')),

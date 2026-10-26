@@ -13,6 +13,7 @@ import { useRouteReadyState } from '../utils/routeReadyState';
 import { useAppState } from '../AppContext';
 import { solidReferenceUrl, solidVersion } from '../content/site';
 import counterSource from '../content/home/counter.tsx?raw';
+import { homeMessage, previewMode } from '../experiments/client';
 
 const Repl = lazy(() => import('../components/ReplTab'));
 const icons: Record<string, string> = { performant, powerful, pragmatic, productive };
@@ -36,6 +37,11 @@ export default function Home() {
       <Meta name="description" content={t('home.v2.intro')} />
       <div dir="ltr" lang="en" class="flex flex-col">
         <div class="container px-5 pt-8 lg:px-12">
+          <Show when={previewMode()}>
+            <p role="note" class="mb-6 rounded-lg border border-solid-light p-4">
+              Copy preview: {homeMessage().label}. This visit is excluded from experiment results.
+            </p>
+          </Show>
           <Show when={context.locale !== 'en'}>
             <p
               role="note"

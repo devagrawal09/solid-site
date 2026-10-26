@@ -10,6 +10,7 @@ import { Icon } from './icons/Icon';
 import PageLoadingBar from './LoadingBar/PageLoadingBar';
 import { routeReadyState, page } from '../utils/routeReadyState';
 import { solidVersion } from '../content/site';
+import { homeMessage } from '../experiments/client';
 
 const Header: ParentComponent<{ title?: string }> = () => {
   const location = useLocation();
@@ -69,14 +70,15 @@ const Header: ParentComponent<{ title?: string }> = () => {
                     Solid {solidVersion} · {t('home.v2.release')}
                   </p>
                   <h1 class="text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
-                    {t('home.v2.hero')}
+                    {homeMessage().headline}
                   </h1>
                   <p class="max-w-2xl text-lg leading-relaxed text-white/90">
-                    {t('home.v2.intro')}
+                    {homeMessage().intro}
                   </p>
                   <div class="flex flex-wrap gap-3">
                     <a
                       href="/tutorial/welcome"
+                      data-experiment-goal="hero_cta"
                       class="bg-solid-medium flex justify-center items-center px-5 py-3 text-md rounded-lg hover:bg-solid-gray transition"
                     >
                       {t('home.v2.learn')}
@@ -84,6 +86,7 @@ const Header: ParentComponent<{ title?: string }> = () => {
                     </a>
                     <a
                       href="/guides/migrating-from-solid-1"
+                      data-experiment-goal="hero_cta"
                       class="flex items-center rounded-lg border border-white/50 px-5 py-3 text-md transition hover:bg-white/10"
                     >
                       {t('home.v2.migrate')}

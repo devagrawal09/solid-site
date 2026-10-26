@@ -10,6 +10,7 @@ import {
 } from 'solid-js';
 import { dynamic } from '@solidjs/web';
 import Repl from '../components/Repl';
+import { trackGoal } from '../experiments/client';
 
 import { Icon } from '../components/icons/Icon';
 import { arrowLeft, arrowRight, chevronDown, chevronDoubleRight } from '../components/icons/solid';
@@ -235,6 +236,7 @@ const Tutorial: Component<{ data: TutorialRouteData }> = (props) => {
                   <a
                     class="inline-flex py-2 px-3 bg-solid-default hover:bg-solid-medium text-white rounded"
                     href={`/tutorial/${data.id}?solved`}
+                    data-experiment-goal="learning_started"
                     onClick={() => setOpen(true)}
                   >
                     {t('tutorial.solve')}
@@ -258,7 +260,10 @@ const Tutorial: Component<{ data: TutorialRouteData }> = (props) => {
                 </span>
 
                 <span data-tooltip={data.nextLesson}>
-                  <a href={data.nextUrl ?? '#'}>
+                  <a
+                    href={data.nextUrl ?? '#'}
+                    data-experiment-goal={data.nextUrl ? 'learning_started' : undefined}
+                  >
                     <span class="sr-only">Next step</span>
                     <Icon path={arrowRight} class={['h-6', { 'opacity-25': !data.nextUrl }]} />
                   </a>
@@ -292,6 +297,7 @@ const Tutorial: Component<{ data: TutorialRouteData }> = (props) => {
                 }}
                 setTabs={setTabs}
                 id="tutorial"
+                onUserEdit={() => trackGoal('learning_started')}
               />
             </Errored>
           </Show>

@@ -7,6 +7,12 @@ overrides:
   '@solidjs/signals': '2.0.0-rc.18'
 
 allowBuilds:
+  esbuild@0.18.20: true
+  esbuild@0.25.12: true
+  esbuild@0.27.3: true
+  esbuild@0.28.2: true
+  sharp@0.34.5: true
+  workerd@1.20260515.1: true
   esbuild@0.27.2: true
   'solid-repl@https://codeload.github.com/devagrawal09/solid-playground/tar.gz/2b803dd675d63ca2e4b07a57dfce43c0dcfd4e5c#path:/packages/solid-repl': true
 

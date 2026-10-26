@@ -71,6 +71,9 @@ const Footer: Component = () => {
             </div>
           </div>
           <div class="flex justify-between">
+            <a href="/privacy" class="text-sm text-gray-600 underline dark:text-gray-300">
+              Privacy
+            </a>
             <p class="text-sm text-center text-gray-600 dark:text-gray-300">
               {t('global.footer.updated', {
                 date: __UPDATED_AT__,

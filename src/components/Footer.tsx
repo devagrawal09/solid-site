@@ -20,12 +20,12 @@ const Supporter: Component<{
   href: string;
 }> = (props) => (
   <a
-    class="mx-4 hover:opacity-50 dark:brightness-150 transition grid"
+    class="mx-4 hover:opacity-50 dark:brightness-150 transition grid place-items-center"
     target="_blank"
     rel="noopener"
     href={props.href}
   >
-    <img class="w-40 m-auto md:m-0" src={props.img} alt={props.alt} loading="lazy" />
+    <img class="w-40" src={props.img} alt={props.alt} loading="lazy" />
   </a>
 );
 

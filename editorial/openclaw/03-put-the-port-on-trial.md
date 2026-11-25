@@ -1,0 +1,39 @@
+# How do you know a dashboard rewrite worked?
+
+Find a button on OpenClaw’s Workboard. Click to collapse a group. Keep hold of the button you found and click it again. Does the group open?
+
+The last instruction matters. An early Solid version could keep the action it picked when it bound the native button; Lit had updated the listener when it redrew. Finding a newly mounted button on the second pass could make a broken toggle look fine. The [regression test](https://github.com/openclaw/openclaw/pull/182293) checks `aria-expanded` on the same button after both clicks. It’s a better place to start judging OpenClaw’s move to Solid 2 than the number of components rewritten. Here are four other tests of what the team accomplished.
+
+## Could they change the renderer without changing everybody’s job?
+
+The [Logs-view trial](https://team.openclaw.ai/chat/roboclaw/timeline-of-solid-js-to-lit-pr-refactors-5ba10f632c29434c9f79a92c3c16a7a3) gave Svelte and Solid the same work to do. OpenClaw saw a way to use TSX and targeted subscriptions to remove manual redraw code from its TypeScript app. It kept the Gateway responsible for accepted writes and session state. The [plugin contract](https://github.com/openclaw/openclaw/issues/168114) remained something a third-party developer could implement without choosing Solid: mount a view, update it, focus it, dispose of it.
+
+The rollout made that promise concrete. Solid RC.13 was installed beside Lit before the new renderer took over a production view. Workboard moved first, followed by the transcript and composer, then the shell. On October 16 [direct Lit dependencies came out](https://github.com/openclaw/openclaw/pull/174213); across the UI and two bundled plugin trees, the same checker went from **800 production files importing Lit to zero**.
+
+One way to see where that boundary ended up is to [toggle a scheduled job](https://github.com/openclaw/openclaw/blob/v2026.11.8/ui/src/pages/cron/cron-page-presentation.ts). The view can preview the change right away and stop showing its preview if you leave. A write the Gateway has already accepted carries on. The lifetime of a checkbox is a poor way to decide the lifetime of a save.
+
+## Could the tests tell a working port from a convincing screenshot?
+
+For its embedded-app teardown, OpenClaw had a test before and after the port. While an old view is shutting down, ask to replace it twice. The old view must stay connected until teardown finishes, teardown must run once, and only the last replacement should appear. In a [matched replay](./evidence.md), both sets of four cases passed. Disable the guard against starting a second teardown and both versions fail at the same point. The [ported test](https://github.com/openclaw/openclaw/pull/169387) was longer. The worthwhile achievement was preserving its ability to catch the fault.
+
+Other tests improved because the team found a more demanding question. The Lit suite already checked that Enter could confirm Japanese text without sending it. Now [the composer test](https://github.com/openclaw/openclaw/blob/v2026.11.8/ui/src/pages/chat/chat-composer-solid.test.tsx) asks whether a streaming update leaves the *same textarea* connected and makes **no write** to its native `value` while composition is in progress. When the user switches sessions the old composition is no longer welcome; its late events must not touch the new draft.
+
+We got a related question on the Solid side. A Settings input showed a draft the user hadn’t committed yet. Validation updated a sibling attribute on the same element, and the grouped binding wrote the old value back. In the upstream test, “Grace” turns back into “Ada.” Splitting up the effects would impose extra work on other rows, so Solid shipped a [development warning in RC.17](https://github.com/solidjs/solid/pull/4205). The PR’s production size checks measured no extra bytes. The warning didn’t preserve the draft. OpenClaw’s later [model-name repair](https://github.com/openclaw/openclaw/pull/191045#issuecomment-6576819002) did: its binding observed only the committed name. With the fix, the browser check kept a 31-character edit through a background refresh.
+
+## What did the next feature or bug fix cost?
+
+On the Debug page, send a `health` request and immediately choose `status` for the next request. The first reply should still say `health`. There used to be a bundle of 21 fields and callbacks between the page that sent requests and the view that named the results. The initial port preserved that arrangement. After a [separate cleanup](https://github.com/openclaw/openclaw/pull/175155), the [wrong-label repair](https://github.com/openclaw/openclaw/pull/199347) needed one production file: capture the name on submission and use it on completion. You can describe what became easier without inventing a productivity multiplier.
+
+Look across the core UI and there’s a similar pattern. At the October 16 cutover, **776 files** directly imported a Solid runtime value and there were **323 direct `createEffect` call sites**. By November 24, the counts were **1,126 and 85**. These are [syntax counts](./evidence.md), not a performance benchmark. They help explain why adding a feature didn’t always require new state to keep in sync. On November `main`, the [Workshop review queue](https://github.com/openclaw/openclaw/pull/202572) learned to advance to the next draft after Apply. It derives the order from the existing snapshot. Reviewers get a new workflow; the Gateway gets no new operation.
+
+There is a performance benchmark, and its setup matters. Start with 400 chat messages, stream 645 updates through a synthetic Gateway, and compare production browser builds in ten interleaved pairs. After the team narrowed what subscribed to transcript updates, [whole-pane renders fell from 353 to one](https://github.com/openclaw/openclaw/pull/180884), and median script CPU time fell **51%**. Both versions were already on Solid.
+
+Distribution size needs two answers. Between v2026.11.4 and v2026.11.5, JavaScript directly referenced by the entry HTML outside route templates fell **73% gzipped**. All JavaScript shipped with the dashboard, counting lazy chunks, **grew 17%**. These releases differed in features, locales and how they split assets. If your question is what it costs a user to open their own chat, neither static count substitutes for that user’s network trace.
+
+## Could the fixes survive outside OpenClaw?
+
+Closing a view gives you one more useful test: can the browser collect what the user just closed? OpenClaw found two failures in the release candidate. A select retained its form, and disposed work stayed in a pending queue. Peter Steinberger sent [the form fix](https://github.com/solidjs/solid/pull/4253) and [the queue fix](https://github.com/solidjs/solid/pull/4254) upstream. Ryan Carniato merged them. They shipped in RC.19 and stable Solid 2.0, where developers with no connection to OpenClaw could benefit.
+
+Then OpenClaw applied the test in reverse. Would stable Solid pass its original collection checks **without** the application’s local patches? The [upgrade PR](https://github.com/openclaw/openclaw/pull/200929) reported that it did. The hosted size comparison passed too, although overall CI and final dependency approval hadn’t cleared at our check. The verified [OpenClaw v2026.11.10 release](https://github.com/openclaw/openclaw/blob/v2026.11.10/ui/package.json) still pins patched RC.18. A stable application release and a stable framework dependency are two separate milestones.
+
+The Workboard button at the start is only a couple of clicks. But keeping its identity across those clicks is the sort of detail that makes this migration legible: something old had to keep working, a real port broke it, and a test now explains what the next version owes the user. Some of those tests stayed with OpenClaw. Others changed the framework.

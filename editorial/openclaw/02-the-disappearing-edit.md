@@ -6,17 +6,42 @@ Those names come from a [Solid regression test](https://github.com/solidjs/solid
 
 There are two questions here. Why did OpenClaw want its dashboard wired up this way? And once we on the Solid side understood the failure, whose job was it to fix it?
 
-## Before there was a failing field, there was a Logs screen
+## Before there was a failing field, there was a migration plan
 
-OpenClaw’s [framework trial](https://team.openclaw.ai/chat/roboclaw/timeline-of-solid-js-to-lit-pr-refactors-5ba10f632c29434c9f79a92c3c16a7a3) put Svelte and Solid through the same Logs-view scenarios. The argument for Solid was a good fit between TSX and the existing TypeScript, and the chance to delete code that told views when to redraw. There was no proposal to replace the Gateway. It already decided which requests counted, stored sessions, and handled reconnects. Third-party plugin authors could keep mounting into a container with the same update, focus, and dispose contract.
+OpenClaw’s [migration plan](https://github.com/openclaw/openclaw/issues/168114) made the case for Solid: TSX fit the existing TypeScript, and views could stop being told when to redraw. As OpenClaw’s Peter Steinberger put it, “The gain is deleting hand-built reactivity, not raw render speed.” There was no proposal to replace the Gateway. It already decided which requests counted, stored sessions, and handled reconnects. Third-party plugin authors could keep mounting into a container with the same update, focus, and dispose contract.
 
-The team [installed Solid RC.13 next to Lit](https://github.com/openclaw/openclaw/pull/168305). Workboard went over first; chat transcript rows, the composer, and the shell followed. By October 16, the dashboard had [retired direct Lit dependencies](https://github.com/openclaw/openclaw/pull/174213). Across the UI and two plugin trees, a like-for-like scan found **800 production files importing Lit before the migration and zero at that cutover**. The new renderer was in place. OpenClaw had kept its authority over saved state. And someone was still perfectly entitled to type an unsaved value.
+The team [installed Solid RC.13 next to Lit](https://github.com/openclaw/openclaw/pull/168305). Workboard was among the first views to move; chat transcript rows, the composer, and the shell followed. By October 16, the dashboard had [retired direct Lit dependencies](https://github.com/openclaw/openclaw/pull/174213). Across the UI and two plugin trees, a like-for-like scan found **800 production files importing Lit before the migration and zero at that cutover**. The new renderer was in place. OpenClaw had kept its authority over saved state. And someone was still perfectly entitled to type an unsaved value.
 
 ## What validation actually wrote
 
 The Settings field bound `value` to committed state but waited for `change` to accept what the user had entered. In between, “Grace” existed only in the native input. Validation changed another attribute on that element. The compiler had grouped the attribute and value updates, so that work also wrote the still-committed “Ada” back into the text box.
 
-One possible framework fix was to split up the effects. [Ryan Carniato declined that approach](https://github.com/solidjs/solid/pull/4198#issuecomment-6320288827): extra effects per row were a cost every affected view would pay. Instead, **Solid RC.17 gained a [development warning](https://github.com/solidjs/solid/pull/4205)**, with no increase in the PR’s production-size checks. A developer can keep a draft current on `onInput` or let the browser own it with `defaultValue`. The warning doesn't silently choose a policy. In the original failing pattern, both framework versions put “Ada” back; the newer one tells you why.
+```tsx
+// “Ada” is committed. “Grace” lives only in the input until `change`.
+<input aria-invalid={invalid()} value={name()} onChange={(e) => setName(e.currentTarget.value)} />
+```
+
+When validation flips `aria-invalid`, the grouped update runs again and writes `name()` over what the user typed.
+
+One possible framework fix was to split up the effects. [Ryan Carniato declined that approach](https://github.com/solidjs/solid/pull/4198#issuecomment-6320288827): extra effects per row were a cost every affected view would pay. Instead, **Solid RC.17 gained a [development warning](https://github.com/solidjs/solid/pull/4205)**, `UNCOMMITTED_INPUT_OVERWRITTEN`, which adds nothing to production builds. In the original failing pattern, both framework versions put “Ada” back; the newer one tells you why, and names the two ways out:
+
+```tsx
+// Commit the draft as the user types
+<input
+  aria-invalid={invalid()}
+  value={name()}
+  onInput={(e) => setName(e.currentTarget.value)}
+/>
+
+// Or let the browser own the draft until `change`
+<input
+  aria-invalid={invalid()}
+  defaultValue={name()}
+  onChange={(e) => setName(e.currentTarget.value)}
+/>
+```
+
+The warning doesn't silently choose a policy for you.
 
 OpenClaw later fixed a [custom model-name field](https://github.com/openclaw/openclaw/pull/191045#issuecomment-6576819002) by watching only the committed value. A background refresh could change other attributes without disturbing the live edit. A browser check lost a 31-character draft twice on the old build and preserved it twice after the fix. The Solid test and the OpenClaw test establish different things: a developer gets a diagnosis, and a person actually gets to finish typing.
 
@@ -24,22 +49,32 @@ OpenClaw later fixed a [custom model-name field](https://github.com/openclaw/ope
 
 There was another way a straightforward translation could be wrong. A Workboard toggle chose between “expand” and “collapse.” Lit refreshed the binding on redraw; the translated Solid expression picked once when it bound the button. The repair moved the decision inside the event callback. The [test clicks the same button twice](https://github.com/openclaw/openclaw/pull/182293) and checks the expanded state after each click. Construct a fresh button before the second click and the test exercises the wrong thing.
 
+```tsx
+// Chosen once, when the button is bound: the second click collapses again
+<button aria-expanded={String(open())} onClick={open() ? collapse : expand}>
+  Toggle
+</button>
+
+// Chosen on every click
+<button aria-expanded={String(open())} onClick={() => (open() ? collapse() : expand())}>
+  Toggle
+</button>
+```
+
 Now consider someone composing Japanese text while a chat reply streams. Checking the final string alone can miss a disruptive write to the textarea. OpenClaw already tested the Enter key under Lit. Its [Solid composer test](https://github.com/openclaw/openclaw/blob/v2026.11.8/ui/src/pages/chat/chat-composer-solid.test.tsx) also checks that the streaming update neither replaces the element nor writes its native `value`. Switch conversations, and the expectation reverses: the new draft must be safe from a late event on the old element.
 
-That’s more precise coverage of these interactions. It doesn’t mean the old suite was generally weaker. Remove one guard against repeated teardown from disposable copies of both versions: [both fixtures](https://github.com/openclaw/openclaw/pull/169387) pass with the guard and both catch the same duplicate call without it.
+That’s more precise coverage of these interactions. It doesn’t mean the old suite was generally weaker. We removed the guard against repeated teardown from copies of the [Lit fixture](https://github.com/openclaw/openclaw/blob/88b4ae9fba33e59bf9e23a4be29d09df34a01a83/ui/src/components/mcp-app-unmount.test.ts) and the [ported fixture](https://github.com/openclaw/openclaw/blob/3be41182be9b09709f3e6c038c46aeb7d633841d/ui/src/components/mcp-app-unmount.test.ts). Both pass with the guard, and both catch the same duplicate teardown without it.
 
 ## Follow the next repair
 
-An accessible label on the Debug page also confused *current* with *submitted*. Send a `health` request, then select `status` before the reply arrives. Which name should a screen reader announce for the reply? The page used to send its view 21 fields and callbacks. A [post-port cleanup](https://github.com/openclaw/openclaw/pull/175155) put the request and the label together. A later developer could [capture the submitted name](https://github.com/openclaw/openclaw/pull/199347) once and use it through completion, leaving the next request editable. The fix touched one production file.
+An accessible label on the Debug page also confused _current_ with _submitted_. Send a `health` request, then select `status` before the reply arrives. Which name should a screen reader announce for the reply? The page used to send its view 21 fields and callbacks. A [post-port cleanup](https://github.com/openclaw/openclaw/pull/175155) put the request and the label together. A later fix could [capture the submitted name](https://github.com/openclaw/openclaw/pull/199347) once and use it through completion, leaving the next request editable. The fix touched one production file.
 
-Scale that change out to the core UI. From the October 16 cutover to November 24, files directly importing a Solid runtime value rose **from 776 to 1,126**, while direct `createEffect` call sites fell **from 323 to 85**. Those [counts](./evidence.md) don’t grade the code. They make an interesting prediction: more of the UI should be able to read what it needs without a separate callback to keep a copy current. On `main`, the [Workshop draft queue](https://github.com/openclaw/openclaw/pull/202572) did just that. After Apply, it derives the next draft from what the app already knows. The reviewer stays in the queue, with no new Gateway operation.
+Scale that change out to the core UI. From the October 16 cutover to November 24, files directly importing a Solid runtime value rose **from 776 to 1,126**, while direct `createEffect` call sites fell **from 323 to 85**. Those counts come from the TypeScript sources under `ui/src`, tests excluded, and they don’t grade the code. They make an interesting prediction: more of the UI should be able to read what it needs without a separate callback to keep a copy current. The [Skills Workshop](https://github.com/openclaw/openclaw/pull/202572) shows the kind of change that follows: after Apply, the queue stays open on the next draft, and the Gateway calls behind it are the same as before.
 
-In a [controlled streaming test](https://github.com/openclaw/openclaw/pull/180884), narrowing subscriptions reduced whole-pane renders from **353 to one** and median script CPU time by **51%**. Both sides were Solid builds. Size tells a less tidy story: from OpenClaw v2026.11.4 to v2026.11.5, directly referenced entry HTML JavaScript outside route templates shrank **73% gzipped**, while all shipped dashboard JavaScript **grew 17%**. Features and chunking changed. A lighter entry list, a larger full distribution, and a less busy chat pane can all be true.
+In a [controlled streaming test](https://github.com/openclaw/openclaw/pull/180884) a week after the cutover, narrowing subscriptions reduced whole-pane renders from **353 to one** and median script CPU time by **51%**. Both sides were Solid builds. Size tells a less tidy story: from OpenClaw v2026.11.4 to v2026.11.5, directly referenced entry HTML JavaScript outside route templates shrank **73% gzipped**, while all shipped dashboard JavaScript **grew 17%**. Features and chunking changed. A lighter entry list, a larger full distribution, and a less busy chat pane can all be true.
 
 ## What reached stable first
 
-The lost edit wasn’t the only report that traveled in both directions. OpenClaw’s Peter Steinberger submitted Solid fixes for a [closed form still held by a select](https://github.com/solidjs/solid/pull/4253) and [disposed computations left in a queue](https://github.com/solidjs/solid/pull/4254). Ryan merged both, and they shipped in RC.19 and then stable Solid 2.0.
-
-OpenClaw’s own [v2026.11.10 manifest](https://github.com/openclaw/openclaw/blob/v2026.11.10/ui/package.json) still pins patched RC.18. The [2.0 upgrade branch](https://github.com/openclaw/openclaw/pull/200929) passed the original memory checks without the patches and cleared its size check, but its aggregate CI and final dependency approval hadn’t cleared at our check. The people who found the problems had already helped other Solid users before shipping the stable framework themselves.
+The lost edit wasn’t the only report that traveled in both directions. Steinberger submitted Solid fixes for a [closed form still held by a select](https://github.com/solidjs/solid/pull/4253) and [disposed computations left in a queue](https://github.com/solidjs/solid/pull/4254). Both landed in RC.19 and shipped in stable Solid 2.0, so every Solid app got them, not just OpenClaw.
 
 Back at the input, “Grace” and “Ada” can both be correct. One is the edit in progress; one is the last accepted value. OpenClaw’s job was to let the user decide when the first should replace the second. Ours was to make it harder for a developer to miss the moment they’d taken that decision away.
